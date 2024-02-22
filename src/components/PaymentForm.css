@@ -1,7 +1,7 @@
 /* src/components/PaymentForm.css */
 
 form {
-    max-width: 400px;
+    width: fit-content;
     margin: auto;
     padding: 20px;
     border: 1px solid #ddd;
@@ -66,4 +66,18 @@ button:hover {
 
 .input-name-checkout:focus {
     outline: none;
+}
+
+.button-is-loading>.fa-spinner {
+    animation: rotation 2s infinite linear;
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(359deg);
+    }
 }
