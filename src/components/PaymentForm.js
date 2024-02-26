@@ -39,16 +39,6 @@ const PaymentForm = ({ handlePayment }) => {
             return
         }
         const cardElement = elements.getElement(CardNumberElement)
-        /*   cardElement.on('change', function (event) {
-              console.log("cardElement event", event)
-              if (event.complete) {
-                  // enable payment button
-              } else if (event.error) {
-                  // show validation to customer
-                  setError("Veuillez saisir la carte")
-                  return
-              }
-          }) */
         const paymentData = {
             nomSociete: nomSociete,
             codeArticle: codeArticle,
@@ -115,10 +105,13 @@ const PaymentForm = ({ handlePayment }) => {
                     console.log(res)
                     if (res.error) {
                         if (res.error.code === 'incorrect_cvc') {
-                            setError("Code cryptogramme visuel est incorrect")
+                            setError("Code cryptogramme visuel est incorrect.")
                         }
                         if (res.error.code === 'card_declined') {
-                            setError("Paiement refusé. Réessayer ou choisir une autre carte")
+                            setError("Paiement refusé. Réessayer ou choisir une autre carte.")
+                        }
+                        if (res.error.code === 'payment_intent_authentication_failure') {
+                            setError('Paiement refusé. Authentification échouée.')
                         }
                     }
                     if (res.paymentIntent) {
@@ -251,9 +244,6 @@ const PaymentForm = ({ handlePayment }) => {
                     </div>
                 </div>
             </div>
-
-
-
             {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
             {succeeded && <div style={{ color: 'green', marginBottom: 10 }}>{succeeded}</div>}
             <button type="submit" style={{ cursor: payButtonDisabled ? 'not-allowed' : 'pointer', minWidth: '150px', height: 40 }} disabled={payButtonDisabled} >
@@ -262,10 +252,7 @@ const PaymentForm = ({ handlePayment }) => {
                     :
                     <> Payer {montant > 0 && montant + ' €'}</>
                 }
-
-
             </button>
-
         </form>
     )
 }
