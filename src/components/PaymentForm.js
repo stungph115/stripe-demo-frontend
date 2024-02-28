@@ -1,10 +1,11 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useStripe, useElements, CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js'
 import './PaymentForm.css'
 import { env } from '../env'
 import axios from "axios"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { Form } from 'react-bootstrap'
 
 const PaymentForm = ({ handlePayment }) => {
     const stripe = useStripe()
@@ -24,6 +25,136 @@ const PaymentForm = ({ handlePayment }) => {
     const [payButtonDisabled, setPayButtonDisabled] = useState(false)
     const [error, setError] = useState(null)
     const [succeeded, setSucceeded] = useState(null)
+    const [card, setCard] = useState(null)
+    const [cards, setCards] = useState([])
+    const [customer, setCustomer] = useState(null)
+    const [customers, setCustomers] = useState([])
+    const codeClientdefault = 'ABC123'
+    useEffect(() => {
+        getCustomers()
+    }, [])
+
+    function getCustomers() {
+        axios.get(env.URL + 'customer/' + codeClientdefault).then((res) => {
+            console.log(res)
+            if (res.data.customer) {
+                setCustomers(res.data.customer)
+            }
+        })
+    }
+    useEffect(() => {
+        if (customer && customer.card && customer.card.length() > 0) {
+            setCards(customer.card)
+        }
+    }, [customer])
+    const handleSubmitv2 = async (event) => {
+        event.preventDefault()
+        const customerData = {
+            codeClient: codeClient,
+            name: billingName,
+            email: billingEmail,
+            phone: billingTel,
+            address: {
+                city: billingAdresseCity,
+                country: billingAdresseCountry === 'France' && 'fr',
+                line1: billingAdresseLine1,
+                line2: billingAdresseLine2 !== '' ? billingAdresseLine2 : null,
+                postal_code: billingAdresseCP,
+                state: null
+            }
+        }
+        //create customer
+        axios.post(env.URL + 'customer', {
+            customerData
+        }).then(async (res) => {
+            console.log('new res:  ', res)
+            //create payment method
+            const cardElement = elements.getElement(CardNumberElement)
+            const paymentMethodResponse = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+            })
+            console.log("paymentMethodResponse", paymentMethodResponse)
+            const paymentMethodId = paymentMethodResponse.paymentMethod.id
+            const customerId = res.data.entity.id
+            const card = {
+                brand: paymentMethodResponse.paymentMethod.card.brand,
+                exp_month: paymentMethodResponse.paymentMethod.card.exp_month,
+                exp_year: paymentMethodResponse.paymentMethod.card.exp_year,
+                lastFour: paymentMethodResponse.paymentMethod.card.last4
+            }
+            //attach payment method
+            await axios.post(env.URL + 'payment-method', { paymentMethodId, customerId, card })
+
+        }).catch((error) => {
+            console.log(error)
+        })
+
+    }
+    const handleSubmitv3 = async (event) => {
+        event.preventDefault();
+        const paymentData = {
+            nomSociete: nomSociete,
+            codeArticle: codeArticle,
+            montant: montant * 100,
+            codeClient: codeClient
+        }
+        const customerData = {
+            codeClient: codeClient,
+            name: billingName,
+            email: billingEmail,
+            phone: billingTel,
+            address: {
+                city: billingAdresseCity,
+                country: billingAdresseCountry === 'France' ? 'fr' : undefined,
+                line1: billingAdresseLine1,
+                line2: billingAdresseLine2 || null,
+                postal_code: billingAdresseCP,
+                state: null
+            }
+        };
+
+        try {
+            // Create customer
+            const customerResponse = await axios.post(env.URL + 'customer', { customerData })
+            console.log('New customer: ', customerResponse.data)
+
+            // Create payment method
+            const cardElement = elements.getElement(CardNumberElement)
+            const paymentMethodCreate = await stripe.createPaymentMethod({
+                type: 'card',
+                card: cardElement,
+            })
+
+            console.log("PaymentMethodResponse", paymentMethodCreate)
+
+            const paymentMethodId = paymentMethodCreate.paymentMethod.id
+            const customerId = customerResponse.data.entity.id
+
+            const card = {
+                brand: paymentMethodCreate.paymentMethod.card.brand,
+                exp_month: paymentMethodCreate.paymentMethod.card.exp_month,
+                exp_year: paymentMethodCreate.paymentMethod.card.exp_year,
+                lastFour: paymentMethodCreate.paymentMethod.card.last4
+            }
+
+            // Attach payment method
+            const paymentMethodAttach = await axios.post(env.URL + 'payment-method', { paymentMethodId, customerId, card })
+            console.log("paymentMethodAttach: ", paymentMethodAttach)
+            //create payment intent
+            /* const createPayment = await */
+            axios.post(env.URL + 'payments/create', { paymentData, customerId }).then((res) => {
+                console.log(res)
+            })
+            /* console.log("createPayment: ", createPayment) */
+
+            /* const clientSecret = createPayment.data.client_secret
+            const confirmPayment = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethodId })
+            console.log(confirmPayment) */
+        } catch (error) {
+            console.error('Error:', error)
+        }
+    }
 
     const handleSubmit = async (event) => {
         setError(null)
@@ -43,7 +174,20 @@ const PaymentForm = ({ handlePayment }) => {
             nomSociete: nomSociete,
             codeArticle: codeArticle,
             montant: montant * 100,
-            codeClient: codeClient
+            codeClient: codeClient,
+            billing_details: {
+                name: billingName,
+                email: billingEmail,
+                phone: billingTel,
+                address: {
+                    city: billingAdresseCity,
+                    country: billingAdresseCountry === 'France' && 'fr',
+                    line1: billingAdresseLine1,
+                    line2: billingAdresseLine2 !== '' ? billingAdresseLine2 : null,
+                    postal_code: billingAdresseCP,
+                    state: null
+                }
+            }
         }
         if (!cardElement) {
             return
@@ -135,7 +279,7 @@ const PaymentForm = ({ handlePayment }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmitv3}>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingBlock: 20 }}>
                 <div style={{ width: '100%', padding: 50 }}>
                     <label>
@@ -154,37 +298,60 @@ const PaymentForm = ({ handlePayment }) => {
                         Code client:
                         <input type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
                     </label>
-                    <label>
-                        Mode de paiement (CB)
-                    </label>
-                    <div style={{
-                        boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
-                        padding: 20,
-                        borderRadius: 5
-                    }}>
-                        <div className='card-detail-title'>N° de la carte</div>
-                        <div className='card-element' style={{ marginBottom: '20px' }}>
-                            <CardNumberElement options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
-                            />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }} >
-                            <div /* style={{ width: '40%' }} */>
-                                <div className='card-detail-title'>Date d'expiration</div>
-                                <div className='card-element'>
-                                    <CardExpiryElement />
-                                </div>
+                    {/* CB */}
+                    <div>
+                        <label>
+                            Mode de paiement (CB)
+                        </label>
+                        {cards.length > 0 &&
+                            <>
+                                <Form.Select
+                                    value={cards}
+                                    onChange={(e) => setCard(e.target.value)}
+                                >
+                                    <option value={0}>Selectionner une card</option>
+                                    {
+                                        cards.map(item => (
+                                            <option key={item.id} value={item.id}>{item.lastfor}</option>
+                                        ))
+                                    }
+                                </Form.Select>
+                                Ajouter une card
+                            </>
+
+                        }
+
+                        {<div style={{
+                            boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+                            padding: 20,
+                            borderRadius: 5
+                        }}>
+                            <div className='card-detail-title'>N° de la carte</div>
+                            <div className='card-element' style={{ marginBottom: '20px' }}>
+                                <CardNumberElement options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
+                                />
                             </div>
-                            <div /* style={{ width: '40%' }} */>
-                                <div className='card-detail-title'>Cryptogramme visuel</div>
-                                <div className='card-element' >
-                                    <CardCvcElement options={{ placeholder: '123' }} />
+                            <div style={{ display: 'flex', justifyContent: 'space-between' }} >
+                                <div /* style={{ width: '40%' }} */>
+                                    <div className='card-detail-title'>Date d'expiration</div>
+                                    <div className='card-element'>
+                                        <CardExpiryElement />
+                                    </div>
                                 </div>
+                                <div /* style={{ width: '40%' }} */>
+                                    <div className='card-detail-title'>Cryptogramme visuel</div>
+                                    <div className='card-element' >
+                                        <CardCvcElement options={{ placeholder: '123' }} />
+                                    </div>
+                                </div>
+
                             </div>
 
-                        </div>
-
+                        </div>}
                     </div>
+
                 </div>
+                {/* facture */}
                 <div style={{ width: '100%', paddingInline: 50, borderLeft: '1px solid #c4c4c4' }}>
                     <label style={{ marginTop: 30 }}>
                         Détail facturation
