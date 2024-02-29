@@ -139,18 +139,17 @@ const PaymentForm = ({ handlePayment }) => {
             }
 
             // Attach payment method
-            const paymentMethodAttach = await axios.post(env.URL + 'payment-method', { paymentMethodId, customerId, card })
-            console.log("paymentMethodAttach: ", paymentMethodAttach)
-            //create payment intent
-            /* const createPayment = await */
-            axios.post(env.URL + 'payments/create', { paymentData, customerId }).then((res) => {
+            axios.post(env.URL + 'payment-method', { paymentMethodId, customerId, card }).then((res) => {
                 console.log(res)
+            }).catch((err) => {
+                console.log(err.response.data.message)
             })
-            /* console.log("createPayment: ", createPayment) */
+            return
+            //create payment intent
+            /*  const choosenMethod = paymentMethodAttach.data.entity.id
+             const createPayment = await axios.post(env.URL + 'payments/create', { paymentData, customerId, choosenMethod })
+             console.log("createPayment: ", createPayment) */
 
-            /* const clientSecret = createPayment.data.client_secret
-            const confirmPayment = await stripe.confirmCardPayment(clientSecret, { payment_method: paymentMethodId })
-            console.log(confirmPayment) */
         } catch (error) {
             console.error('Error:', error)
         }
