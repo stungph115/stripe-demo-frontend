@@ -4,16 +4,18 @@ import './PaymentForm.css'
 import { env } from '../env'
 import axios from "axios"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSpinner } from '@fortawesome/free-solid-svg-icons'
-import { Form } from 'react-bootstrap'
+import { faArrowsRotate, faCreditCard, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { Button, Form } from 'react-bootstrap'
+import { faCcVisa, faCcAmex, faCcMastercard } from '@fortawesome/free-brands-svg-icons'
 
 const PaymentForm = ({ handlePayment }) => {
+    const codeClientdefault = 'ABCD1234'
     const stripe = useStripe()
     const elements = useElements()
     const [nomSociete, setNomsociete] = useState('HTL')
     const [codeArticle, setCodeArticle] = useState('ABC123')
     const [montant, setMontant] = useState('10.10')
-    const [codeClient, setCodeClient] = useState('ABC123')
+    const [codeClient, setCodeClient] = useState(codeClientdefault)
     const [billingName, setBillingName] = useState('Son-Tung PHAM')
     const [billingEmail, setBillingEmail] = useState('rominage.115@gmail.com')
     const [billingTel, setBillingTel] = useState('+33 7 58 58 58 58')
@@ -22,31 +24,30 @@ const PaymentForm = ({ handlePayment }) => {
     const [billingAdresseLine2, setBillingAdresseLine2] = useState('')
     const [billingAdresseLine1, setBillingAdresseLine1] = useState('1  rue de Charenton')
     const [billingAdresseCP, setBillingAdresseCP] = useState('75012')
-    const [payButtonDisabled, setPayButtonDisabled] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
     const [succeeded, setSucceeded] = useState(null)
+    const [loadingStatus, setLoadingStatus] = useState(null)
     const [card, setCard] = useState(null)
     const [cards, setCards] = useState([])
-    const [customer, setCustomer] = useState(null)
-    const [customers, setCustomers] = useState([])
-    const codeClientdefault = 'ABC123'
-    useEffect(() => {
-        getCustomers()
-    }, [])
+    const [showCardInput, setShowCardInput] = useState(false)
+    const [getCustomerDisabled, setGetCustomerDisabled] = useState(true)
+    const [isCardNumberFilled, setCardNumberFilled] = useState(false);
+    const [isCardExpiryFilled, setCardExpiryFilled] = useState(false);
+    const [isCardCvcFilled, setCardCvcFilled] = useState(false);
 
-    function getCustomers() {
-        axios.get(env.URL + 'customer/' + codeClientdefault).then((res) => {
-            console.log(res)
-            if (res.data.customer) {
-                setCustomers(res.data.customer)
-            }
-        })
-    }
-    useEffect(() => {
-        if (customer && customer.card && customer.card.length() > 0) {
-            setCards(customer.card)
-        }
-    }, [customer])
+    const handleCardNumberChange = (event) => {
+        setCardNumberFilled(event.complete);
+    };
+
+    const handleCardExpiryChange = (event) => {
+        setCardExpiryFilled(event.complete);
+    };
+
+    const handleCardCvcChange = (event) => {
+        setCardCvcFilled(event.complete);
+    };
+
     const handleSubmitv2 = async (event) => {
         event.preventDefault()
         const customerData = {
@@ -143,6 +144,7 @@ const PaymentForm = ({ handlePayment }) => {
                 console.log(res)
             }).catch((err) => {
                 console.log(err.response.data.message)
+
             })
             return
             //create payment intent
@@ -158,7 +160,6 @@ const PaymentForm = ({ handlePayment }) => {
     const handleSubmit = async (event) => {
         setError(null)
         setSucceeded(null)
-        setPayButtonDisabled(true)
         event.preventDefault()
         if (!nomSociete || !codeArticle || !montant || !codeClient || !billingName || !billingEmail || !billingAdresseCP || !billingAdresseCity || !billingAdresseCountry || !billingAdresseLine1 || !billingTel) {
             setError('Veuillez sasir tous les informations obligatoires')
@@ -230,7 +231,6 @@ const PaymentForm = ({ handlePayment }) => {
                             if (paymentMethod.error.code === 'incomplete_cvc') {
                                 setError("Veuillez saisir le cryptogramme visuel")
                             }
-                            setPayButtonDisabled(false)
                             return
                         }
                         const data = {
@@ -263,95 +263,197 @@ const PaymentForm = ({ handlePayment }) => {
                             setSucceeded("Paiement réussit")
                         }
                     }
-                    setPayButtonDisabled(false)
 
                 }).catch(err => {
                     console.log(err)
-                    setPayButtonDisabled(false)
                 })
             })
         } catch (error) {
-            setPayButtonDisabled(false)
             console.error('Error during payment confirmation:', error)
             setError('Payment failed. Please try again.')
         }
     }
+    const handleSubmitv4 = async (event) => {
+        setError(null)
+        setSucceeded(null)
+        setIsLoading(true)
+        event.preventDefault()
+        if (codeArticle == '' || nomSociete == '' || codeClient == '' || montant == '') {
+            setIsLoading(false)
+            setError('Veuillez saisir tous les informations')
+            return
+        }
+        const cardElement = elements.getElement(CardNumberElement)
+        console.log("cardElement: ", cardElement)
 
+        if (!card && (!isCardNumberFilled || !isCardExpiryFilled || !isCardCvcFilled)) {
+            setIsLoading(false)
+            setError("Veuillez choisir une methode de paiement ou bien saisir la nouvelle carte.")
+        }
+
+        const paymentItentData = {
+            nomSociete: nomSociete,
+            codeArticle: codeArticle,
+            montant: montant * 100,
+            codeClient: codeClient,
+        }
+        setLoadingStatus("Creating payment...")
+        axios.post(env.URL + 'payments/create', {
+            paymentItentData
+        }).then((res) => {
+            console.log(res)
+            console.log('choosen card: ', card)
+            if (card) {
+                setLoadingStatus("Verifying payment method...")
+                //to complete
+            } else {
+                setLoadingStatus("Creating payment method...")
+                //to complete
+
+            }
+        }).catch((error) => {
+            console.log(error)
+            setIsLoading(false)
+        })
+
+    }
+
+    useEffect(() => {
+        if (codeClient !== '') {
+            setGetCustomerDisabled(false)
+        }
+    }, [codeClient])
+
+    function getPaymentMethod() {
+        axios.get(env.URL + 'customer/' + codeClient).then((res) => {
+            console.log(res.data.entity)
+            setCards(res.data.entity)
+        }).catch((err) => {
+            console.log(err)
+        })
+    }
+
+    function chooseCard(cardId) {
+        setShowCardInput(false)
+        setCard(cardId)
+    }
+
+    function newCard() {
+        setShowCardInput(true)
+        setCard(null)
+    }
     return (
-        <form onSubmit={handleSubmitv3}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBlock: 20 }}>
-                <div style={{ width: '100%', padding: 50 }}>
-                    <label>
-                        Nom de la société:
-                        <input type="text" name="nomSociete" value={nomSociete} onChange={(e) => { setNomsociete(e.target.value) }} />
-                    </label>
-                    <label>
-                        Code d'article:
-                        <input type="text" name="codeArticle" value={codeArticle} onChange={(e) => { setCodeArticle(e.target.value) }} />
-                    </label>
-                    <label>
-                        Montant (en €):
-                        <input type="number" step="0.01" name="montant" value={montant} onChange={(e) => { setMontant(e.target.value) }} />
-                    </label>
-                    <label>
-                        Code client:
-                        <input type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
-                    </label>
-                    {/* CB */}
-                    <div>
-                        <label>
-                            Mode de paiement (CB)
-                        </label>
-                        {cards.length > 0 &&
-                            <>
-                                <Form.Select
-                                    value={cards}
-                                    onChange={(e) => setCard(e.target.value)}
-                                >
-                                    <option value={0}>Selectionner une card</option>
-                                    {
-                                        cards.map(item => (
-                                            <option key={item.id} value={item.id}>{item.lastfor}</option>
-                                        ))
-                                    }
-                                </Form.Select>
-                                Ajouter une card
-                            </>
+        <form onSubmit={handleSubmitv4}>
 
-                        }
+            {isLoading ?
+                <div style={{ padding: 20 }}>
 
-                        {<div style={{
-                            boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
-                            padding: 20,
-                            borderRadius: 5
-                        }}>
-                            <div className='card-detail-title'>N° de la carte</div>
-                            <div className='card-element' style={{ marginBottom: '20px' }}>
-                                <CardNumberElement options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
-                                />
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between' }} >
-                                <div /* style={{ width: '40%' }} */>
-                                    <div className='card-detail-title'>Date d'expiration</div>
-                                    <div className='card-element'>
-                                        <CardExpiryElement />
-                                    </div>
-                                </div>
-                                <div /* style={{ width: '40%' }} */>
-                                    <div className='card-detail-title'>Cryptogramme visuel</div>
-                                    <div className='card-element' >
-                                        <CardCvcElement options={{ placeholder: '123' }} />
-                                    </div>
-                                </div>
-
-                            </div>
-
-                        </div>}
-                    </div>
-
+                    {loadingStatus && <div style={{ color: 'blue', marginBottom: 20 }}>{loadingStatus}</div>}
+                    <div className='button-is-loading'><FontAwesomeIcon icon={faSpinner} size='xl' /></div>
                 </div>
-                {/* facture */}
-                <div style={{ width: '100%', paddingInline: 50, borderLeft: '1px solid #c4c4c4' }}>
+                :
+                <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBlock: 20 }}>
+                        <div style={{ width: '100%', paddingInline: 50 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+                                <label>
+                                    Code client:
+                                    <input type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
+                                </label>
+
+                                <Button variant="success" onClick={() => getPaymentMethod()} disabled={getCustomerDisabled} style={{ height: 'fit-content', display: 'flex' }}>
+                                    <div className='button'><FontAwesomeIcon icon={faArrowsRotate} /></div>
+                                </Button>
+                            </div>
+
+
+                            <label>
+                                Nom de la société:
+                                <input type="text" name="nomSociete" value={nomSociete} onChange={(e) => { setNomsociete(e.target.value) }} />
+                            </label>
+                            <label>
+                                Code d'article:
+                                <input type="text" name="codeArticle" value={codeArticle} onChange={(e) => { setCodeArticle(e.target.value) }} />
+                            </label>
+                            <label>
+                                Montant (en €):
+                                <input type="number" step="0.01" name="montant" value={montant} onChange={(e) => { setMontant(e.target.value) }} />
+                            </label>
+
+                            {/* CB */}
+                            <div>
+                                <label>
+                                    Mode de paiement (CB)
+                                </label>
+                                {cards.length > 0 &&
+                                    <>
+                                        {cards.map((item, i) => {
+                                            const getIconByBrand = (brand) => {
+                                                switch (brand) {
+                                                    case 'visa':
+                                                        return faCcVisa
+                                                    case 'mastercard':
+                                                        return faCcMastercard
+                                                    case 'american_express':
+                                                        return faCcAmex
+                                                    // Add more cases for other card brands if needed
+                                                    default:
+                                                        return faCreditCard
+                                                }
+                                            }
+                                            return (
+                                                <div className={card === item.id ? 'credit-card-item choosen' : 'credit-card-item'} key={i} onClick={() => chooseCard(item.id)}>
+                                                    <FontAwesomeIcon icon={getIconByBrand(item.display_brand)} size='xl' className='card-brand' />
+                                                    <div className='card-last4'>**** **** **** {item.last4}</div>
+                                                    <div className='card-exp'>{item.exp_month}/{String(item.exp_year).slice(-2)}</div>
+                                                </div>
+                                            )
+                                        })}
+
+                                        <div onClick={() => newCard()} className='new-card-button'>Ou ajouter une nouvelle card</div>
+                                    </>
+
+                                }
+
+                                {(showCardInput || cards.length === 0) &&
+                                    <div style={{
+                                        boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+                                        padding: 20,
+                                        borderRadius: 5
+                                    }}>
+                                        <div className='card-detail-title'>N° de la carte</div>
+                                        <div className='card-element' style={{ marginBottom: '20px' }}>
+                                            <CardNumberElement
+                                                options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
+                                                onChange={handleCardNumberChange}
+                                            />
+                                        </div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                            <div>
+                                                <div className='card-detail-title'>Date d'expiration</div>
+                                                <div className='card-element'>
+                                                    <CardExpiryElement onChange={handleCardExpiryChange} />
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <div className='card-detail-title'>Cryptogramme visuel</div>
+                                                <div className='card-element'>
+                                                    <CardCvcElement options={{ placeholder: '123' }} onChange={handleCardCvcChange} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {isCardNumberFilled && isCardExpiryFilled && isCardCvcFilled && (
+                                            // Render additional content or enable a submit button
+                                            <div>Your card details are filled!</div>
+                                        )}
+                                    </div>
+                                }
+                            </div>
+
+                        </div>
+                        {/* facture */}
+                        {/*   <div style={{ width: '100%', paddingInline: 50, borderLeft: '1px solid #c4c4c4' }}>
                     <label style={{ marginTop: 30 }}>
                         Détail facturation
                     </label>
@@ -408,18 +510,17 @@ const PaymentForm = ({ handlePayment }) => {
                         </div>
 
                     </div>
-                </div>
-            </div>
-            {error && <div style={{ color: 'red', marginBottom: 10 }}>{error}</div>}
-            {succeeded && <div style={{ color: 'green', marginBottom: 10 }}>{succeeded}</div>}
-            <button type="submit" style={{ cursor: payButtonDisabled ? 'not-allowed' : 'pointer', minWidth: '150px', height: 40 }} disabled={payButtonDisabled} >
-                {payButtonDisabled ?
-                    <div className='button-is-loading'><FontAwesomeIcon icon={faSpinner} size='xl' /></div>
-                    :
-                    <> Payer {montant > 0 && montant + ' €'}</>
-                }
-            </button>
-        </form>
+                </div> */}
+                    </div>
+
+                    <button type="submit" style={{ cursor: 'pointer', minWidth: '150px', height: 40, marginTop: 50 }}  >
+                        Payer {montant > 0 && montant + ' €'}
+                    </button>
+                </>
+            }
+            {error && <div style={{ color: 'red', marginBlock: 10 }}>{error}</div>}
+            {succeeded && <div style={{ color: 'green', marginBlock: 10 }}>{succeeded}</div>}
+        </form >
     )
 }
 

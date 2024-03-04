@@ -6,7 +6,8 @@ form {
     padding: 20px;
     border: 1px solid #ddd;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 0 10px rgba(254, 220, 220, 0.1);
+    min-width: 300px;
 }
 
 label {
@@ -80,4 +81,47 @@ button:hover {
     to {
         transform: rotate(359deg);
     }
+}
+
+.credit-card-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    width: 100%;
+    background: #eaeaea;
+    margin: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.credit-card-item.choosen {
+    border: 2px solid rgb(255, 173, 107)
+}
+
+.credit-card-item:hover {
+    background-color: rgb(255, 173, 107);
+}
+
+.card-last4 {
+    padding-inline: 20px
+}
+
+.card-brand {
+    padding-inline: 5px;
+}
+
+.car-exp {
+    padding-inline: 20px
+}
+
+.new-card-button {
+    cursor: pointer;
+    color: #007185;
+    padding: 10px
+}
+
+.new-card-button:hover {
+    color: rgb(255, 173, 107);
+    text-decoration: underline;
+
 }
