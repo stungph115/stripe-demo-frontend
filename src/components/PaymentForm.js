@@ -4,7 +4,7 @@ import './PaymentForm.css'
 import { env } from '../env'
 import axios from "axios"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowsRotate, faCreditCard, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faArrowsRotate, faCheckCircle, faCreditCard, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { Button, Form } from 'react-bootstrap'
 import { faCcVisa, faCcAmex, faCcMastercard } from '@fortawesome/free-brands-svg-icons'
 
@@ -32,21 +32,23 @@ const PaymentForm = ({ handlePayment }) => {
     const [cards, setCards] = useState([])
     const [showCardInput, setShowCardInput] = useState(false)
     const [getCustomerDisabled, setGetCustomerDisabled] = useState(true)
-    const [isCardNumberFilled, setCardNumberFilled] = useState(false);
-    const [isCardExpiryFilled, setCardExpiryFilled] = useState(false);
-    const [isCardCvcFilled, setCardCvcFilled] = useState(false);
+    const [isCardNumberFilled, setCardNumberFilled] = useState(false)
+    const [isCardExpiryFilled, setCardExpiryFilled] = useState(false)
+    const [isCardCvcFilled, setCardCvcFilled] = useState(false)
+    const [saveNewCard, setSaveNewCard] = useState(true)
+    const [setAsDefaultCard, setSetASDefaultCartd] = useState(false)
 
     const handleCardNumberChange = (event) => {
-        setCardNumberFilled(event.complete);
-    };
+        setCardNumberFilled(event.complete)
+    }
 
     const handleCardExpiryChange = (event) => {
-        setCardExpiryFilled(event.complete);
-    };
+        setCardExpiryFilled(event.complete)
+    }
 
     const handleCardCvcChange = (event) => {
-        setCardCvcFilled(event.complete);
-    };
+        setCardCvcFilled(event.complete)
+    }
 
     const handleSubmitv2 = async (event) => {
         event.preventDefault()
@@ -93,7 +95,7 @@ const PaymentForm = ({ handlePayment }) => {
 
     }
     const handleSubmitv3 = async (event) => {
-        event.preventDefault();
+        event.preventDefault()
         const paymentData = {
             nomSociete: nomSociete,
             codeArticle: codeArticle,
@@ -113,7 +115,7 @@ const PaymentForm = ({ handlePayment }) => {
                 postal_code: billingAdresseCP,
                 state: null
             }
-        };
+        }
 
         try {
             // Create customer
@@ -276,21 +278,54 @@ const PaymentForm = ({ handlePayment }) => {
     const handleSubmitv4 = async (event) => {
         setError(null)
         setSucceeded(null)
-        setIsLoading(true)
+
         event.preventDefault()
+        if (!stripe || !elements) {
+            return
+        }
         if (codeArticle == '' || nomSociete == '' || codeClient == '' || montant == '') {
-            setIsLoading(false)
             setError('Veuillez saisir tous les informations')
             return
         }
-        const cardElement = elements.getElement(CardNumberElement)
-        console.log("cardElement: ", cardElement)
-
         if (!card && (!isCardNumberFilled || !isCardExpiryFilled || !isCardCvcFilled)) {
-            setIsLoading(false)
             setError("Veuillez choisir une methode de paiement ou bien saisir la nouvelle carte.")
+            return
         }
-
+        const cardElement = elements.getElement(CardNumberElement)
+        var paymentMethod
+        if (!card) {
+            try {
+                const newPaymentMethod = await stripe.createPaymentMethod({
+                    type: 'card',
+                    card: cardElement,
+                    /*  billing_details: {
+                         name: 'Jenny Rosen',
+                     }, */
+                })
+                paymentMethod = newPaymentMethod.paymentMethod.id
+                if (saveNewCard) {
+                    axios.post(env.URL + 'customer', {
+                        codeClient: codeClient,
+                        paymentMethod: paymentMethod
+                    }).then((res) => {
+                        console.log("res axios attach payment: ", res)
+                    }).catch((err) => {
+                        console.log("error axios attach payment: ", err)
+                        if (err.response.data.message) {
+                            setError(err.response.data.message)
+                        }
+                        return
+                    })
+                }
+            } catch (error) {
+                console.log(error)
+                return
+            }
+        } else {
+            paymentMethod = card
+        }
+        console.log('choosen payment method: ', paymentMethod)
+        setIsLoading(true)
         const paymentItentData = {
             nomSociete: nomSociete,
             codeArticle: codeArticle,
@@ -300,15 +335,13 @@ const PaymentForm = ({ handlePayment }) => {
         setLoadingStatus("Creating payment...")
         axios.post(env.URL + 'payments/create', {
             paymentItentData
-        }).then((res) => {
+        }).then(async (res) => {
             console.log(res)
-            console.log('choosen card: ', card)
             if (card) {
                 setLoadingStatus("Verifying payment method...")
                 //to complete
             } else {
-                setLoadingStatus("Creating payment method...")
-                //to complete
+                console.log("add method then verify")
 
             }
         }).catch((error) => {
@@ -326,7 +359,6 @@ const PaymentForm = ({ handlePayment }) => {
 
     function getPaymentMethod() {
         axios.get(env.URL + 'customer/' + codeClient).then((res) => {
-            console.log(res.data.entity)
             setCards(res.data.entity)
         }).catch((err) => {
             console.log(err)
@@ -343,21 +375,20 @@ const PaymentForm = ({ handlePayment }) => {
         setCard(null)
     }
     return (
-        <form onSubmit={handleSubmitv4}>
+        <Form onSubmit={handleSubmitv4}>
 
             {isLoading ?
-                <div style={{ padding: 20 }}>
+                (<div style={{ padding: 20 }}>
 
                     {loadingStatus && <div style={{ color: 'blue', marginBottom: 20 }}>{loadingStatus}</div>}
                     <div className='button-is-loading'><FontAwesomeIcon icon={faSpinner} size='xl' /></div>
-                </div>
+                </div>)
                 :
-                <>
+                (<>
                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingBlock: 20 }}>
                         <div style={{ width: '100%', paddingInline: 50 }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-
-                                <label>
+                            <div style={{ display: 'flex', justifyContent: '', alignItems: 'center' }}>
+                                <label style={{ width: '100%' }}>
                                     Code client:
                                     <input type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
                                 </label>
@@ -418,109 +449,86 @@ const PaymentForm = ({ handlePayment }) => {
 
                                 {(showCardInput || cards.length === 0) &&
                                     <div style={{
-                                        boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+                                        boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19)",
                                         padding: 20,
-                                        borderRadius: 5
+                                        borderRadius: 5,
+                                        width: '100%'
                                     }}>
-                                        <div className='card-detail-title'>N° de la carte</div>
-                                        <div className='card-element' style={{ marginBottom: '20px' }}>
-                                            <CardNumberElement
-                                                options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
-                                                onChange={handleCardNumberChange}
+                                        <div style={{ padding: 20 }}>
+                                            <div className='card-detail-title'>N° de la carte</div>
+                                            <div className='card-element' style={{ marginBottom: '20px' }}>
+                                                <div style={{ display: "flex", justifyContent: 'space-between' }}>
+                                                    <div style={{ width: '80%' }}>
+                                                        <CardNumberElement
+                                                            options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
+                                                            onChange={handleCardNumberChange}
+                                                        />
+                                                    </div>
+                                                    {isCardNumberFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '10%' }} />}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                                                <div>
+                                                    <div className='card-detail-title'>Date d'expiration </div>
+                                                    <div className='card-element'>
+                                                        <div style={{ display: "flex", justifyContent: 'space-between' }}>
+                                                            <div style={{ width: '80%' }}>
+                                                                <CardExpiryElement onChange={handleCardExpiryChange} />
+                                                            </div>
+                                                            {isCardExpiryFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '20%' }} />}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className='card-detail-title'>Cryptogramme visuel</div>
+                                                    <div className='card-element'>
+                                                        <div style={{ display: "flex", justifyContent: 'space-between' }}>
+                                                            <div style={{ width: '80%' }}>
+                                                                <CardCvcElement options={{ placeholder: '123' }} onChange={handleCardCvcChange} />
+                                                            </div>
+                                                            {isCardCvcFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '20%' }} />}
+
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className='check-box-save-card' onClick={() => setSaveNewCard(saveNewCard ? false : true)}>
+                                            <Form.Check
+                                                type="checkbox"
+                                                checked={saveNewCard}
+                                                onChange={() => setSaveNewCard(saveNewCard ? false : true)}
                                             />
+
+                                            Enregistrer cette carte pour vos prochains paiements
                                         </div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                            <div>
-                                                <div className='card-detail-title'>Date d'expiration</div>
-                                                <div className='card-element'>
-                                                    <CardExpiryElement onChange={handleCardExpiryChange} />
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <div className='card-detail-title'>Cryptogramme visuel</div>
-                                                <div className='card-element'>
-                                                    <CardCvcElement options={{ placeholder: '123' }} onChange={handleCardCvcChange} />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {isCardNumberFilled && isCardExpiryFilled && isCardCvcFilled && (
-                                            // Render additional content or enable a submit button
-                                            <div>Your card details are filled!</div>
-                                        )}
+
                                     </div>
                                 }
                             </div>
 
                         </div>
-                        {/* facture */}
-                        {/*   <div style={{ width: '100%', paddingInline: 50, borderLeft: '1px solid #c4c4c4' }}>
-                    <label style={{ marginTop: 30 }}>
-                        Détail facturation
-                    </label>
-                    <div style={{
-                        boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
-                        padding: 20,
-                        borderRadius: 5,
-                        marginBottom: 50
-                    }}>
-                        <div className='card-detail-title'>Nom et prénom*</div>
-                        <div style={{ marginBottom: '10px' }}>
-                            <input type='text' placeholder='Jean DUPONT ' className='input-name-checkout' onChange={(e) => { setBillingName(e.target.value) }} value={billingName} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <div style={{ width: '50%' }}>
-                                <div className='card-detail-title'>Adresse e-mail*</div>
-                                <div style={{ marginBottom: '10px' }}>
-                                    <input type='text' placeholder='exemple@mail.fr ' className='input-name-checkout' onChange={(e) => { setBillingEmail(e.target.value) }} value={billingEmail} />
-                                </div>
-                            </div>
-                            <div style={{ width: '40%' }}>
-                                <div className='card-detail-title'>N° téléphone*</div>
-                                <div style={{ marginBottom: '10px' }}>
-                                    <input type='text' placeholder='+33 7 58 58 58 58' className='input-name-checkout' onChange={(e) => { setBillingTel(e.target.value) }} value={billingTel} />
-                                </div>
-                            </div>
-                        </div>
-                        <div className='card-detail-title'> Adresse postal*</div>
-                        <div>
-                            <input type='text' placeholder='Ligne 1 (N° et nom de la voie)*' className='input-name-checkout' onChange={(e) => { setBillingAdresseLine1(e.target.value) }} value={billingAdresseLine1} />
-                        </div>
-                        <div style={{ marginBottom: '10px' }}>
-                            <input type='text' placeholder='Ligne 2 (option)' className='input-name-checkout' onChange={(e) => { setBillingAdresseLine2(e.target.value) }} value={billingAdresseLine2} />
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <div style={{ width: '30%' }}>
-                                <div className='card-detail-title'> Code postal*</div>
-                                <div>
-                                    <input type='text' placeholder='75012' className='input-name-checkout' onChange={(e) => { setBillingAdresseCP(e.target.value) }} value={billingAdresseCP} />
-                                </div>
-                            </div>
-                            <div style={{ width: '50%' }}>
-                                <div className='card-detail-title'> Ville*</div>
-                                <div>
-                                    <input type='text' placeholder='Paris' className='input-name-checkout' onChange={(e) => { setBillingAdresseCity(e.target.value) }} value={billingAdresseCity} />
-                                </div>
-                            </div>
-
-                        </div>
-
-                        <div className='card-detail-title'> Pays*</div>
-                        <div>
-                            <input type='text' placeholder='France' className='input-name-checkout' onChange={(e) => { setBillingAdresseCountry(e.target.value) }} value={billingAdresseCountry} />
-                        </div>
-
-                    </div>
-                </div> */}
                     </div>
 
-                    <button type="submit" style={{ cursor: 'pointer', minWidth: '150px', height: 40, marginTop: 50 }}  >
+                    <div className='check-box-save-card' style={{ justifyContent: 'space-evenly' }} onClick={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}>
+                        <Form.Check
+                            type="checkbox"
+                            checked={setAsDefaultCard}
+                            onChange={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}
+                        />
+
+                        Définir cette carte comme méthode de paiement par défaut
+                    </div>
+
+                    <button type="submit" style={{ cursor: 'pointer', minWidth: '150px', height: 40, margin: 0 }}  >
                         Payer {montant > 0 && montant + ' €'}
                     </button>
-                </>
+                </>)
             }
             {error && <div style={{ color: 'red', marginBlock: 10 }}>{error}</div>}
             {succeeded && <div style={{ color: 'green', marginBlock: 10 }}>{succeeded}</div>}
-        </form >
+        </Form >
     )
 }
 

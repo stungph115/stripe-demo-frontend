@@ -10,6 +10,10 @@ form {
     min-width: 300px;
 }
 
+div.form-check {
+    display: 'flex';
+}
+
 label {
     display: block;
     margin-bottom: 8px;
@@ -47,6 +51,10 @@ button:hover {
     /* border-radius: 5px; */
     padding: 10px;
     border-bottom: 1px solid #c4c4c4;
+}
+
+.card-element.filled {
+    border-bottom: 1px solid #45ea63;
 }
 
 .card-detail-title {
@@ -124,4 +132,15 @@ button:hover {
     color: rgb(255, 173, 107);
     text-decoration: underline;
 
+}
+
+.check-box-save-card {
+    padding: 10px;
+    display: flex;
+    cursor: pointer;
+    justify-content: space-evenly
+}
+
+.check-box-save-card:hover {
+    color: #007185;
 }
