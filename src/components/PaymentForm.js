@@ -37,7 +37,7 @@ const PaymentForm = ({ handlePayment }) => {
     const [isCardCvcFilled, setCardCvcFilled] = useState(false)
     const [saveNewCard, setSaveNewCard] = useState(true)
     const [setAsDefaultCard, setSetASDefaultCartd] = useState(false)
-
+    const [paymentIntent, setPaymentIntent] = useState(null)
     const handleCardNumberChange = (event) => {
         setCardNumberFilled(event.complete)
     }
@@ -292,7 +292,7 @@ const PaymentForm = ({ handlePayment }) => {
             return
         }
         const cardElement = elements.getElement(CardNumberElement)
-        var paymentMethod
+        var chosenPaymentMethod
         if (!card) {
             try {
                 const newPaymentMethod = await stripe.createPaymentMethod({
@@ -302,11 +302,11 @@ const PaymentForm = ({ handlePayment }) => {
                          name: 'Jenny Rosen',
                      }, */
                 })
-                paymentMethod = newPaymentMethod.paymentMethod.id
+                chosenPaymentMethod = newPaymentMethod.paymentMethod.id
                 if (saveNewCard) {
                     axios.post(env.URL + 'customer', {
                         codeClient: codeClient,
-                        paymentMethod: paymentMethod
+                        paymentMethod: chosenPaymentMethod
                     }).then((res) => {
                         console.log("res axios attach payment: ", res)
                     }).catch((err) => {
@@ -322,9 +322,9 @@ const PaymentForm = ({ handlePayment }) => {
                 return
             }
         } else {
-            paymentMethod = card
+            chosenPaymentMethod = card
         }
-        console.log('choosen payment method: ', paymentMethod)
+        console.log('choosen payment method: ', chosenPaymentMethod)
         setIsLoading(true)
         const paymentItentData = {
             nomSociete: nomSociete,
@@ -336,14 +336,13 @@ const PaymentForm = ({ handlePayment }) => {
         axios.post(env.URL + 'payments/create', {
             paymentItentData
         }).then(async (res) => {
-            console.log(res)
-            if (card) {
-                setLoadingStatus("Verifying payment method...")
-                //to complete
-            } else {
-                console.log("add method then verify")
-
-            }
+            console.log('create payment intent res: ', res)
+            setPaymentIntent(res.data.entity)
+            setLoadingStatus("Verifying payment method...")
+            console.log("paymentIntent: ", paymentIntent)
+            axios.patch(env.URL + 'payments/confirm/' + res.data.entity.paymentId, { chosenPaymentMethod }).then((res) => {
+                console.log(res)
+            }).catch((err) => console.log(err))
         }).catch((error) => {
             console.log(error)
             setIsLoading(false)
