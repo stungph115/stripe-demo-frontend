@@ -138,7 +138,8 @@ button:hover {
     padding: 10px;
     display: flex;
     cursor: pointer;
-    justify-content: space-evenly
+    justify-content: space-evenly;
+    width: 100%;
 }
 
 .check-box-save-card:hover {

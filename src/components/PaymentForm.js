@@ -4,7 +4,7 @@ import './PaymentForm.css'
 import { env } from '../env'
 import axios from "axios"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowsRotate, faCheckCircle, faCreditCard, faPlus, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faArrowsRotate, faCheckCircle, faCreditCard, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { Button, Form } from 'react-bootstrap'
 import { faCcVisa, faCcAmex, faCcMastercard } from '@fortawesome/free-brands-svg-icons'
 
@@ -16,14 +16,6 @@ const PaymentForm = ({ handlePayment }) => {
     const [codeArticle, setCodeArticle] = useState('ABC123')
     const [montant, setMontant] = useState('10.10')
     const [codeClient, setCodeClient] = useState(codeClientdefault)
-    const [billingName, setBillingName] = useState('Son-Tung PHAM')
-    const [billingEmail, setBillingEmail] = useState('rominage.115@gmail.com')
-    const [billingTel, setBillingTel] = useState('+33 7 58 58 58 58')
-    const [billingAdresseCity, setBillingAdresseCity] = useState('Paris')
-    const [billingAdresseCountry, setBillingAdresseCountry] = useState('France')
-    const [billingAdresseLine2, setBillingAdresseLine2] = useState('')
-    const [billingAdresseLine1, setBillingAdresseLine1] = useState('1  rue de Charenton')
-    const [billingAdresseCP, setBillingAdresseCP] = useState('75012')
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
     const [succeeded, setSucceeded] = useState(null)
@@ -41,249 +33,22 @@ const PaymentForm = ({ handlePayment }) => {
     const handleCardNumberChange = (event) => {
         setCardNumberFilled(event.complete)
     }
-
     const handleCardExpiryChange = (event) => {
         setCardExpiryFilled(event.complete)
     }
-
     const handleCardCvcChange = (event) => {
         setCardCvcFilled(event.complete)
-    }
-
-    const handleSubmitv2 = async (event) => {
-        event.preventDefault()
-        const customerData = {
-            codeClient: codeClient,
-            name: billingName,
-            email: billingEmail,
-            phone: billingTel,
-            address: {
-                city: billingAdresseCity,
-                country: billingAdresseCountry === 'France' && 'fr',
-                line1: billingAdresseLine1,
-                line2: billingAdresseLine2 !== '' ? billingAdresseLine2 : null,
-                postal_code: billingAdresseCP,
-                state: null
-            }
-        }
-        //create customer
-        axios.post(env.URL + 'customer', {
-            customerData
-        }).then(async (res) => {
-            console.log('new res:  ', res)
-            //create payment method
-            const cardElement = elements.getElement(CardNumberElement)
-            const paymentMethodResponse = await stripe.createPaymentMethod({
-                type: 'card',
-                card: cardElement,
-            })
-            console.log("paymentMethodResponse", paymentMethodResponse)
-            const paymentMethodId = paymentMethodResponse.paymentMethod.id
-            const customerId = res.data.entity.id
-            const card = {
-                brand: paymentMethodResponse.paymentMethod.card.brand,
-                exp_month: paymentMethodResponse.paymentMethod.card.exp_month,
-                exp_year: paymentMethodResponse.paymentMethod.card.exp_year,
-                lastFour: paymentMethodResponse.paymentMethod.card.last4
-            }
-            //attach payment method
-            await axios.post(env.URL + 'payment-method', { paymentMethodId, customerId, card })
-
-        }).catch((error) => {
-            console.log(error)
-        })
-
-    }
-    const handleSubmitv3 = async (event) => {
-        event.preventDefault()
-        const paymentData = {
-            nomSociete: nomSociete,
-            codeArticle: codeArticle,
-            montant: montant * 100,
-            codeClient: codeClient
-        }
-        const customerData = {
-            codeClient: codeClient,
-            name: billingName,
-            email: billingEmail,
-            phone: billingTel,
-            address: {
-                city: billingAdresseCity,
-                country: billingAdresseCountry === 'France' ? 'fr' : undefined,
-                line1: billingAdresseLine1,
-                line2: billingAdresseLine2 || null,
-                postal_code: billingAdresseCP,
-                state: null
-            }
-        }
-
-        try {
-            // Create customer
-            const customerResponse = await axios.post(env.URL + 'customer', { customerData })
-            console.log('New customer: ', customerResponse.data)
-
-            // Create payment method
-            const cardElement = elements.getElement(CardNumberElement)
-            const paymentMethodCreate = await stripe.createPaymentMethod({
-                type: 'card',
-                card: cardElement,
-            })
-
-            console.log("PaymentMethodResponse", paymentMethodCreate)
-
-            const paymentMethodId = paymentMethodCreate.paymentMethod.id
-            const customerId = customerResponse.data.entity.id
-
-            const card = {
-                brand: paymentMethodCreate.paymentMethod.card.brand,
-                exp_month: paymentMethodCreate.paymentMethod.card.exp_month,
-                exp_year: paymentMethodCreate.paymentMethod.card.exp_year,
-                lastFour: paymentMethodCreate.paymentMethod.card.last4
-            }
-
-            // Attach payment method
-            axios.post(env.URL + 'payment-method', { paymentMethodId, customerId, card }).then((res) => {
-                console.log(res)
-            }).catch((err) => {
-                console.log(err.response.data.message)
-
-            })
-            return
-            //create payment intent
-            /*  const choosenMethod = paymentMethodAttach.data.entity.id
-             const createPayment = await axios.post(env.URL + 'payments/create', { paymentData, customerId, choosenMethod })
-             console.log("createPayment: ", createPayment) */
-
-        } catch (error) {
-            console.error('Error:', error)
-        }
     }
 
     const handleSubmit = async (event) => {
         setError(null)
         setSucceeded(null)
-        event.preventDefault()
-        if (!nomSociete || !codeArticle || !montant || !codeClient || !billingName || !billingEmail || !billingAdresseCP || !billingAdresseCity || !billingAdresseCountry || !billingAdresseLine1 || !billingTel) {
-            setError('Veuillez sasir tous les informations obligatoires')
-            return
-        }
-        console.log("submit")
-        if (!stripe || !elements) {
-            return
-        }
-        const cardElement = elements.getElement(CardNumberElement)
-        const paymentData = {
-            nomSociete: nomSociete,
-            codeArticle: codeArticle,
-            montant: montant * 100,
-            codeClient: codeClient,
-            billing_details: {
-                name: billingName,
-                email: billingEmail,
-                phone: billingTel,
-                address: {
-                    city: billingAdresseCity,
-                    country: billingAdresseCountry === 'France' && 'fr',
-                    line1: billingAdresseLine1,
-                    line2: billingAdresseLine2 !== '' ? billingAdresseLine2 : null,
-                    postal_code: billingAdresseCP,
-                    state: null
-                }
-            }
-        }
-        if (!cardElement) {
-            return
-        }
-        try {
-            axios.post(env.URL + 'payments/create', {
-                paymentData
-            }).then(res => {
-
-                console.log("res axios post", res)
-                return new Promise((resolve, reject) => {
-                    stripe.createPaymentMethod({
-                        type: 'card',
-                        card: cardElement,
-                        billing_details: {
-                            name: billingName,
-                            email: billingEmail,
-                            phone: billingTel,
-                            address: {
-                                city: billingAdresseCity,
-                                country: billingAdresseCountry === 'France' && 'fr',
-                                line1: billingAdresseLine1,
-                                line2: billingAdresseLine2 !== '' ? billingAdresseLine2 : null,
-                                postal_code: billingAdresseCP,
-                                state: null
-                            }
-                        }
-                    }).then(paymentMethod => {
-                        console.log("paymentMethod: ", paymentMethod)
-                        if (paymentMethod.error) {
-                            console.log(paymentMethod.error)
-                            if (paymentMethod.error.code === 'incomplete_number') {
-                                setError('Veuillez saisir le numéro de la carte')
-                            }
-                            if (paymentMethod.error.code === 'invalid_number') {
-                                setError('Le numéro de la carte est incorrect')
-                            }
-                            if (paymentMethod.error.code === 'incomplete_expiry') {
-                                setError("Veuillez saisir la date d'expiration")
-                            }
-                            if (paymentMethod.error.code === 'incomplete_cvc') {
-                                setError("Veuillez saisir le cryptogramme visuel")
-                            }
-                            return
-                        }
-                        const data = {
-                            clientSecret: res.data.client_secret,
-                            paymentMethodId: paymentMethod.paymentMethod.id
-                        }
-                        resolve(data)
-                    }).catch(err => reject(err))
-                }).then(res => {
-                    console.log(res)
-                    return stripe.confirmCardPayment(res.clientSecret, {
-                        payment_method: res.paymentMethodId
-                    })
-                }).then(res => {
-                    console.log(res)
-                    if (res.error) {
-                        if (res.error.code === 'incorrect_cvc') {
-                            setError("Code cryptogramme visuel est incorrect.")
-                        }
-                        if (res.error.code === 'card_declined') {
-                            setError("Paiement refusé. Réessayer ou choisir une autre carte.")
-                        }
-                        if (res.error.code === 'payment_intent_authentication_failure') {
-                            setError('Paiement refusé. Authentification échouée.')
-                        }
-                    }
-                    if (res.paymentIntent) {
-                        if (res.paymentIntent.status === 'succeeded') {
-                            //ridirect
-                            setSucceeded("Paiement réussit")
-                        }
-                    }
-
-                }).catch(err => {
-                    console.log(err)
-                })
-            })
-        } catch (error) {
-            console.error('Error during payment confirmation:', error)
-            setError('Payment failed. Please try again.')
-        }
-    }
-    const handleSubmitv4 = async (event) => {
-        setError(null)
-        setSucceeded(null)
-
+        var stop = false
         event.preventDefault()
         if (!stripe || !elements) {
             return
         }
-        if (codeArticle == '' || nomSociete == '' || codeClient == '' || montant == '') {
+        if (codeArticle === '' || nomSociete === '' || codeClient === '' || montant === '') {
             setError('Veuillez saisir tous les informations')
             return
         }
@@ -304,7 +69,7 @@ const PaymentForm = ({ handlePayment }) => {
                 })
                 chosenPaymentMethod = newPaymentMethod.paymentMethod.id
                 if (saveNewCard) {
-                    axios.post(env.URL + 'customer', {
+                    await axios.post(env.URL + 'customer', {
                         codeClient: codeClient,
                         paymentMethod: chosenPaymentMethod
                     }).then((res) => {
@@ -312,9 +77,24 @@ const PaymentForm = ({ handlePayment }) => {
                     }).catch((err) => {
                         console.log("error axios attach payment: ", err)
                         if (err.response.data.message) {
-                            setError(err.response.data.message)
+                            if (err.response.data.message === 'STRIPE_ERROR_card_declined') {
+                                setError("La carte a été refusée")
+                                setIsLoading(false)
+                            } if (err.response.data.message === 'STRIPE_ERROR_incorrect_cvc') {
+                                setError("Code cryptogramme visuel incorrect")
+                                setIsLoading(false)
+                            } if (err.response.data.message === 'STRIPE_ERROR_processing_error') {
+                                setError("Une erreur s'est produite lors du traitement de la carte")
+                                setIsLoading(false)
+                            } if (err.response.data.message === 'STRIPE_ERROR_incorrect_number') {
+                                setError("Numéro de la carte est incorrect")
+                                setIsLoading(false)
+                            } else {
+                                setError(err.response.data.message)
+                                setIsLoading(false)
+                            }
                         }
-                        return
+                        stop = true
                     })
                 }
             } catch (error) {
@@ -324,7 +104,20 @@ const PaymentForm = ({ handlePayment }) => {
         } else {
             chosenPaymentMethod = card
         }
+        if (stop) {
+            return
+        }
         console.log('choosen payment method: ', chosenPaymentMethod)
+        if (setAsDefaultCard) {
+            axios.post(env.URL + 'customer/update-default-pm', {
+                paymentMethod: chosenPaymentMethod,
+                custom: codeClient
+            }).then((res) => {
+                console.log(res)
+            }).catch((err) => {
+                console.log(err)
+            })
+        }
         setIsLoading(true)
         const paymentItentData = {
             nomSociete: nomSociete,
@@ -332,22 +125,52 @@ const PaymentForm = ({ handlePayment }) => {
             montant: montant * 100,
             codeClient: codeClient,
         }
-        setLoadingStatus("Creating payment...")
-        axios.post(env.URL + 'payments/create', {
-            paymentItentData
-        }).then(async (res) => {
-            console.log('create payment intent res: ', res)
-            setPaymentIntent(res.data.entity)
+        if (paymentIntent) {
             setLoadingStatus("Verifying payment method...")
-            console.log("paymentIntent: ", paymentIntent)
-            axios.patch(env.URL + 'payments/confirm/' + res.data.entity.paymentId, { chosenPaymentMethod }).then((res) => {
-                console.log(res)
-            }).catch((err) => console.log(err))
-        }).catch((error) => {
-            console.log(error)
-            setIsLoading(false)
-        })
+            confirmPayment(paymentIntent, chosenPaymentMethod)
+        } else {
+            setLoadingStatus("Creating payment...")
+            await axios.post(env.URL + 'payments/create', {
+                paymentItentData
+            }).then(async (res) => {
+                console.log('create payment intent res: ', res)
+                setPaymentIntent(res.data.paymentData)
+                setLoadingStatus("Verifying payment method...")
+                confirmPayment(res.data.paymentData, chosenPaymentMethod)
+            }).catch((error) => {
+                console.log(error)
+                setIsLoading(false)
+            })
 
+        }
+    }
+
+    async function confirmPayment(paymentIntent, paymentMethod) {
+        console.log(paymentIntent, paymentMethod)
+        stripe.confirmCardPayment(paymentIntent.clientSecret, {
+            payment_method: paymentMethod
+        })
+            .then(function (res) {
+                console.log("confirmPaymentv2 res: ", res)
+                if (res.paymentIntent) {
+                    if (res.paymentIntent.status === 'succeeded') {
+                        //ridirect
+                        setSucceeded("Paiement réussit")
+                    }
+                }
+                if (res.error) {
+                    if (res.error.code === 'incorrect_cvc') {
+                        setError("Code cryptogramme visuel est incorrect.")
+                    }
+                    if (res.error.code === 'card_declined') {
+                        setError("Paiement refusé. Réessayer ou choisir une autre carte.")
+                    }
+                    if (res.error.code === 'payment_intent_authentication_failure') {
+                        setError('Paiement refusé. Authentification échouée.')
+                    }
+                }
+                setIsLoading(false)
+            })
     }
 
     useEffect(() => {
@@ -373,14 +196,21 @@ const PaymentForm = ({ handlePayment }) => {
         setShowCardInput(true)
         setCard(null)
     }
+    useEffect(() => {
+        console.log(cards)
+        const defaultCard = cards.find(card => card.default === true)
+        if (defaultCard) {
+            setCard(defaultCard.id)
+        }
+    }, [cards])
     return (
-        <Form onSubmit={handleSubmitv4}>
+        <Form onSubmit={handleSubmit}>
 
             {isLoading ?
                 (<div style={{ padding: 20 }}>
 
                     {loadingStatus && <div style={{ color: 'blue', marginBottom: 20 }}>{loadingStatus}</div>}
-                    <div className='button-is-loading'><FontAwesomeIcon icon={faSpinner} size='xl' /></div>
+                    <div><FontAwesomeIcon icon={faSpinner} size='2xl' spin /></div>
                 </div>)
                 :
                 (<>
