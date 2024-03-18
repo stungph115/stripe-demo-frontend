@@ -1,0 +1,67 @@
+10.0.1.222:22
+user : tung
+pass : mWAp4PhVCHdZ
+
+mysql -A -D paiements -u tung -p
+passwd: 8mQt4rGyzuzg
+
+nom société
+code_article
+ref_transaction: codecli_codeartil_date_prix
+date
+montant
+codeClient
+
+card visa france: 4000002500000003
+mastercard: 5555555555554444
+amex: 378282246310005
+discorver: 6011111111111117
+
+
+Successful Payment:
+	Card Number: 4242 4242 4242 4242
+	Expiry Date: Any future date
+	CVC: Any three digits
+
+Card Declined:
+	Card Number: 4000 0000 0000 0002
+	Expiry Date: Any future date
+	CVC: Any three digits
+
+Insufficient Funds:
+	Card Number: 	4000000000009995
+	Expiry Date: Any future date
+	CVC: Any three digits
+Incorrect CVC:
+
+	Card Number: 4000 0000 0000 0127
+	Expiry Date: Any future date
+	CVC: Any three digits
+
+Expired Card:
+
+	Card Number: 4000 0000 0000 0069
+	Expiry Date: Any past date
+	CVC: Any three digits
+
+Authentication Required:
+	Card Number: 4000 0027 6000 3184
+	Expiry Date: Any future date
+	CVC: Any three digits
+public key:
+pk_test_51OUmh2BBo1z4BCbnLKYaQEinn027HusxiLQ5WcsIAIpFEeNw9rvspBLx1WxIeQuSPuNWDEW4DMtvAEOTBzAomwFG00VvxzFrKJ
+
+secret key:
+sk_test_51OUmh2BBo1z4BCbnG4NlJycO5DQTjMOckZxGBDi9SQBaUgUaJ02mdeSVafVcN16TiVqJYuRmaD1ROnOo4Dilu0UO00Rh0rQA0b
+
+
+Generic decline		4000000000000002	card_declined		generic_decline
+Insufficient funds      4000000000009995	card_declined		insufficient_funds
+Lost card decline	4000000000009987	card_declined		lost_card
+Stolen card decline	4000000000009979	card_declined		stolen_card
+Expired card decline	4000000000000069	expired_card		n/a
+Incorrect CVC decline	4000000000000127	incorrect_cvc		n/a
+Processing error 	4000000000000119	processing_error	n/a
+Incorrect number        4242424242424241	incorrect_number	n/a
+Exceeding velocity 	4000000000006975	card_declined		card_velocity_exceeded
+limit decline	
