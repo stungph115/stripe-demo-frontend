@@ -5,7 +5,7 @@ import { env } from '../env'
 import axios from "axios"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowsRotate, faCheckCircle, faCreditCard, faSpinner } from '@fortawesome/free-solid-svg-icons'
-import { Button, Form } from 'react-bootstrap'
+import { Button, Form, ToggleButton, ToggleButtonGroup } from 'react-bootstrap'
 import { faCcVisa, faCcAmex, faCcMastercard } from '@fortawesome/free-brands-svg-icons'
 
 const PaymentForm = ({ handlePayment }) => {
@@ -30,6 +30,10 @@ const PaymentForm = ({ handlePayment }) => {
     const [saveNewCard, setSaveNewCard] = useState(true)
     const [setAsDefaultCard, setSetASDefaultCartd] = useState(false)
     const [paymentIntent, setPaymentIntent] = useState(null)
+    const [formValue, setFormValue] = useState(1)
+    const [codeContrat, setCodecontrat] = useState('ABCD1234')
+    const [interval, setInterval] = useState(['month', 'year', 'week', 'day'])
+    const [paymentDate, setPaymentDate] = useState(null)
     const handleCardNumberChange = (event) => {
         setCardNumberFilled(event.complete)
     }
@@ -215,7 +219,7 @@ const PaymentForm = ({ handlePayment }) => {
                 :
                 (<>
                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingBlock: 20 }}>
-                        <div style={{ width: '100%', paddingInline: 50 }}>
+                        <div style={{ width: '100%', paddingInline: 50, }}>
                             <div style={{ display: 'flex', justifyContent: '', alignItems: 'center' }}>
                                 <label style={{ width: '100%' }}>
                                     Code client:
@@ -226,17 +230,57 @@ const PaymentForm = ({ handlePayment }) => {
                                     <div className='button'><FontAwesomeIcon icon={faArrowsRotate} /></div>
                                 </Button>
                             </div>
+                            <ToggleButtonGroup type="radio" value={formValue} name="formToggle" onChange={(value) => setFormValue(value)} style={{}}>
+                                <ToggleButton id="tbg-btn-1" variant="light" value={1}>
+                                    <span style={{ color: "#2C3E50", fontWeight: 600, fontSize: formValue === 1 ? 18 : 14 }}>Paiement une fois</span>
+                                </ToggleButton>
+                                <ToggleButton id="tbg-btn-2" variant="light" value={2}>
+                                    <span style={{ color: "#2C3E50", fontWeight: 600, fontSize: formValue === 1 ? 14 : 18 }}>Abonnement</span>
+                                </ToggleButton>
+                            </ToggleButtonGroup>
 
+                            {formValue === 1 &&
+                                <>
+                                    <div>
+                                        <label style={{ width: '100%' }}>
+                                            Nom de la société:
+                                            <input type="text" name="nomSociete" value={nomSociete} onChange={(e) => { setNomsociete(e.target.value) }} />
+                                        </label >
+                                    </div>
+                                    <div>
+                                        <label style={{ width: '100%' }}>
+                                            Code d'article:
+                                            <input type="text" name="codeArticle" value={codeArticle} onChange={(e) => { setCodeArticle(e.target.value) }} />
+                                        </label>
+                                    </div>
+                                </>
 
-                            <label>
-                                Nom de la société:
-                                <input type="text" name="nomSociete" value={nomSociete} onChange={(e) => { setNomsociete(e.target.value) }} />
-                            </label>
-                            <label>
-                                Code d'article:
-                                <input type="text" name="codeArticle" value={codeArticle} onChange={(e) => { setCodeArticle(e.target.value) }} />
-                            </label>
-                            <label>
+                            }
+                            {formValue === 2 &&
+                                <>
+                                    <div>
+                                        <label style={{ width: '100%' }}>
+                                            Code contrat:
+                                            <input type="text" name="codecontrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label style={{ width: '100%' }}>
+                                            Code contrat:
+                                            <input type="text" name="codecontrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
+                                        </label>
+                                    </div>
+                                    <div>
+                                        <label style={{ width: '100%' }}>
+                                            Code contrat:
+                                            <input type="text" name="codecontrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
+                                        </label>
+                                    </div>
+                                </>
+
+                            }
+
+                            <label style={{ width: '100%' }}>
                                 Montant (en €):
                                 <input type="number" step="0.01" name="montant" value={montant} onChange={(e) => { setMontant(e.target.value) }} />
                             </label>
