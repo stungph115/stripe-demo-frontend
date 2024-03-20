@@ -32,8 +32,23 @@ const PaymentForm = ({ handlePayment }) => {
     const [paymentIntent, setPaymentIntent] = useState(null)
     const [formValue, setFormValue] = useState(1)
     const [codeContrat, setCodecontrat] = useState('ABCD1234')
-    const [interval, setInterval] = useState(['month', 'year', 'week', 'day'])
-    const [paymentDate, setPaymentDate] = useState(null)
+    const [interval, setInterval] = useState('week')
+    const [paymentDay, setPaymentDay] = useState(1)
+    const [paymentMonth, setPaymentMonth] = useState(1)
+    var daysInMonth = Array.from({ length: 31 }, (_, index) => index + 1)
+    const [dayOptions, setDayOptions] = useState(daysInMonth)
+    useEffect(() => {
+        var lastDayofMonth
+        if (paymentMonth === '2') {
+            lastDayofMonth = 28
+        } else if (['4', '6', '9', '11'].includes(paymentMonth)) {
+            lastDayofMonth = 30
+        } else {
+            lastDayofMonth = 31
+        }
+        setDayOptions(Array.from({ length: lastDayofMonth }, (_, index) => index + 1))
+    }, [paymentMonth])
+
     const handleCardNumberChange = (event) => {
         setCardNumberFilled(event.complete)
     }
@@ -43,16 +58,21 @@ const PaymentForm = ({ handlePayment }) => {
     const handleCardCvcChange = (event) => {
         setCardCvcFilled(event.complete)
     }
-
     const handleSubmit = async (event) => {
         setError(null)
         setSucceeded(null)
         var stop = false
         event.preventDefault()
+
+        //check forms
         if (!stripe || !elements) {
             return
         }
-        if (codeArticle === '' || nomSociete === '' || codeClient === '' || montant === '') {
+        if (
+            (formValue === 1 && (codeArticle === '' || nomSociete === '' || codeClient === '' || montant === ''))
+            ||
+            (formValue === 2 && (codeContrat === '' || !interval || (interval === 'year' && (!paymentMonth || !paymentDay)) || (interval === 'month' && !paymentDay) || montant === ''))
+        ) {
             setError('Veuillez saisir tous les informations')
             return
         }
@@ -60,9 +80,12 @@ const PaymentForm = ({ handlePayment }) => {
             setError("Veuillez choisir une methode de paiement ou bien saisir la nouvelle carte.")
             return
         }
+        //get card from elements
         const cardElement = elements.getElement(CardNumberElement)
+        //chosing card
         var chosenPaymentMethod
         if (!card) {
+            //add new card
             try {
                 const newPaymentMethod = await stripe.createPaymentMethod({
                     type: 'card',
@@ -72,6 +95,7 @@ const PaymentForm = ({ handlePayment }) => {
                      }, */
                 })
                 chosenPaymentMethod = newPaymentMethod.paymentMethod.id
+                //save card
                 if (saveNewCard) {
                     await axios.post(env.URL + 'customer', {
                         codeClient: codeClient,
@@ -106,13 +130,15 @@ const PaymentForm = ({ handlePayment }) => {
                 return
             }
         } else {
+            //chose existed card
             chosenPaymentMethod = card
         }
         if (stop) {
             return
         }
-        console.log('choosen payment method: ', chosenPaymentMethod)
+        //set card as default
         if (setAsDefaultCard) {
+
             axios.post(env.URL + 'customer/update-default-pm', {
                 paymentMethod: chosenPaymentMethod,
                 custom: codeClient
@@ -123,29 +149,73 @@ const PaymentForm = ({ handlePayment }) => {
             })
         }
         setIsLoading(true)
-        const paymentItentData = {
-            nomSociete: nomSociete,
-            codeArticle: codeArticle,
-            montant: montant * 100,
-            codeClient: codeClient,
-        }
-        if (paymentIntent) {
-            setLoadingStatus("Verifying payment method...")
-            confirmPayment(paymentIntent, chosenPaymentMethod)
-        } else {
-            setLoadingStatus("Creating payment...")
-            await axios.post(env.URL + 'payments/create', {
-                paymentItentData
-            }).then(async (res) => {
-                console.log('create payment intent res: ', res)
-                setPaymentIntent(res.data.paymentData)
+        //1 time payment 
+        if (formValue === 1) {
+            const paymentItentData = {
+                nomSociete: nomSociete,
+                codeArticle: codeArticle,
+                montant: montant * 100,
+                codeClient: codeClient,
+            }
+            //recheck payment if already created
+            if (paymentIntent) {
                 setLoadingStatus("Verifying payment method...")
-                confirmPayment(res.data.paymentData, chosenPaymentMethod)
+                confirmPayment(paymentIntent, chosenPaymentMethod)
+            } else {
+                setLoadingStatus("Creating payment...")
+                //create payment
+                await axios.post(env.URL + 'payments/create', {
+                    paymentItentData
+                }).then(async (res) => {
+                    console.log('create payment intent res: ', res)
+                    setPaymentIntent(res.data.paymentData)
+                    setLoadingStatus("Verifying payment method...")
+                    //confirm payment
+                    confirmPayment(res.data.paymentData, chosenPaymentMethod)
+                }).catch((error) => {
+                    console.log(error)
+                    setIsLoading(false)
+                })
+            }
+        }
+        //subscription
+        if (formValue === 2) {
+            //create price
+            const priceData = {
+                amount: montant * 100,
+                interval: interval,
+                interval_count: interval === 'month' ? 12 : null
+            }
+            console.log('creating price', priceData)
+
+            setLoadingStatus("Creating price...")
+
+            await axios.post(env.URL + 'subscription/price', priceData).then(async (res) => {
+                console.log('create price res: ', res)
+                if (res.data.data) {
+                    //create subscription
+                    const subscriptionData = {
+                        codeClient: codeClient,
+                        price: res.data.data,
+                        payment_method: chosenPaymentMethod,
+                        paymentDate: interval === 'week' ? null : paymentDay,
+                        paymentMonth: interval === 'week' ? null : paymentMonth
+                    }
+
+                    setLoadingStatus("Creating subscription...")
+                    axios.post(env.URL + 'subscription/create', subscriptionData).then(async (res) => {
+                        console.log('create subscription res: ', res)
+
+                    }).catch((error) => {
+                        console.log(error)
+                        setIsLoading(false)
+                    })
+                }
+
             }).catch((error) => {
                 console.log(error)
                 setIsLoading(false)
             })
-
         }
     }
 
@@ -155,7 +225,6 @@ const PaymentForm = ({ handlePayment }) => {
             payment_method: paymentMethod
         })
             .then(function (res) {
-                console.log("confirmPaymentv2 res: ", res)
                 if (res.paymentIntent) {
                     if (res.paymentIntent.status === 'succeeded') {
                         //ridirect
@@ -201,7 +270,6 @@ const PaymentForm = ({ handlePayment }) => {
         setCard(null)
     }
     useEffect(() => {
-        console.log(cards)
         const defaultCard = cards.find(card => card.default === true)
         if (defaultCard) {
             setCard(defaultCard.id)
@@ -226,11 +294,11 @@ const PaymentForm = ({ handlePayment }) => {
                                     <input type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
                                 </label>
 
-                                <Button variant="success" onClick={() => getPaymentMethod()} disabled={getCustomerDisabled} style={{ height: 'fit-content', display: 'flex' }}>
+                                <Button variant="success" onClick={() => getPaymentMethod()} disabled={getCustomerDisabled} style={{ height: 'fit-content', display: 'flex', marginTop: '15px' }}>
                                     <div className='button'><FontAwesomeIcon icon={faArrowsRotate} /></div>
                                 </Button>
                             </div>
-                            <ToggleButtonGroup type="radio" value={formValue} name="formToggle" onChange={(value) => setFormValue(value)} style={{}}>
+                            <ToggleButtonGroup type="radio" value={formValue} name="formToggle" onChange={(value) => setFormValue(value)} style={{ marginTop: 20 }}>
                                 <ToggleButton id="tbg-btn-1" variant="light" value={1}>
                                     <span style={{ color: "#2C3E50", fontWeight: 600, fontSize: formValue === 1 ? 18 : 14 }}>Paiement une fois</span>
                                 </ToggleButton>
@@ -254,7 +322,6 @@ const PaymentForm = ({ handlePayment }) => {
                                         </label>
                                     </div>
                                 </>
-
                             }
                             {formValue === 2 &&
                                 <>
@@ -264,20 +331,50 @@ const PaymentForm = ({ handlePayment }) => {
                                             <input type="text" name="codecontrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
                                         </label>
                                     </div>
-                                    <div>
-                                        <label style={{ width: '100%' }}>
-                                            Code contrat:
-                                            <input type="text" name="codecontrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
+                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                        <label style={{ width: interval === 'week' ? '100%' : (interval === 'month' ? '45%' : '30%') }}>
+                                            Intervalle:
+                                            <Form.Select name="interval" onChange={(e) => { setInterval(e.target.value) }}>
+                                                <option value={'week'}>Hebdomadaire</option>
+                                                <option value={'month'}>Mensuel</option>
+                                                <option value={'year'}>Annuel</option>
+                                            </Form.Select>
                                         </label>
-                                    </div>
-                                    <div>
-                                        <label style={{ width: '100%' }}>
-                                            Code contrat:
-                                            <input type="text" name="codecontrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
-                                        </label>
+                                        {interval && interval !== 'week' &&
+                                            <>
+                                                {interval === 'year' &&
+                                                    <label style={{ width: '30%' }}>
+                                                        Mois :
+                                                        <Form.Select name="paymentMonth" onChange={(e) => { setPaymentMonth(e.target.value) }}>
+                                                            <option value={1}>Janvier</option>
+                                                            <option value={2}>Février</option>
+                                                            <option value={3}>Mars</option>
+                                                            <option value={4}>Avril</option>
+                                                            <option value={5}>Mai</option>
+                                                            <option value={6}>Juin</option>
+                                                            <option value={7}>Juillet</option>
+                                                            <option value={8}>Août</option>
+                                                            <option value={9}>Septembre</option>
+                                                            <option value={10}>Octobre</option>
+                                                            <option value={11}>Novembre</option>
+                                                            <option value={12}>Décembre</option>
+                                                        </Form.Select>
+                                                    </label>
+                                                }
+                                                <label style={{ width: interval === 'month' ? '45%' : '30%' }}>
+                                                    Jour :
+                                                    <Form.Select name="paymentDay" onChange={(e) => { setPaymentDay(e.target.value) }}>
+                                                        {dayOptions.map((day, i) => {
+                                                            return (
+                                                                <option value={day} key={i}>{day}</option>
+                                                            )
+                                                        })}
+                                                    </Form.Select>
+                                                </label>
+                                            </>
+                                        }
                                     </div>
                                 </>
-
                             }
 
                             <label style={{ width: '100%' }}>
@@ -372,6 +469,7 @@ const PaymentForm = ({ handlePayment }) => {
                                                 type="checkbox"
                                                 checked={saveNewCard}
                                                 onChange={() => setSaveNewCard(saveNewCard ? false : true)}
+                                                style={{ marginRight: 10 }}
                                             />
 
                                             Enregistrer cette carte pour vos prochains paiements
@@ -384,19 +482,20 @@ const PaymentForm = ({ handlePayment }) => {
                         </div>
                     </div>
 
-                    <div className='check-box-save-card' style={{ justifyContent: 'space-evenly' }} onClick={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}>
+                    <div className='check-box-save-card' onClick={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}>
                         <Form.Check
                             type="checkbox"
                             checked={setAsDefaultCard}
                             onChange={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}
+                            style={{ marginRight: 10 }}
                         />
 
                         Définir cette carte comme méthode de paiement par défaut
                     </div>
 
-                    <button type="submit" style={{ cursor: 'pointer', minWidth: '150px', height: 40, margin: 0 }}  >
+                    <Button type="submit" variant="success" style={{ cursor: 'pointer', minWidth: '150px', height: 40, margin: 0 }}  >
                         Payer {montant > 0 && montant + ' €'}
-                    </button>
+                    </Button>
                 </>)
             }
             {error && <div style={{ color: 'red', marginBlock: 10 }}>{error}</div>}
