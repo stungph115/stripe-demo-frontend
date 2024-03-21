@@ -37,6 +37,9 @@ const PaymentForm = ({ handlePayment }) => {
     const [paymentMonth, setPaymentMonth] = useState(1)
     var daysInMonth = Array.from({ length: 31 }, (_, index) => index + 1)
     const [dayOptions, setDayOptions] = useState(daysInMonth)
+    const [cardDefault, setCardDefault] = useState(null)
+    const [invervalCount, setIntervalCount] = useState(1)
+
     useEffect(() => {
         var lastDayofMonth
         if (paymentMonth === '2') {
@@ -76,6 +79,7 @@ const PaymentForm = ({ handlePayment }) => {
             setError('Veuillez saisir tous les informations')
             return
         }
+
         if (!card && (!isCardNumberFilled || !isCardExpiryFilled || !isCardCvcFilled)) {
             setError("Veuillez choisir une methode de paiement ou bien saisir la nouvelle carte.")
             return
@@ -138,12 +142,13 @@ const PaymentForm = ({ handlePayment }) => {
         }
         //set card as default
         if (setAsDefaultCard) {
-
+            console.log('setting card as default')
             axios.post(env.URL + 'customer/update-default-pm', {
                 paymentMethod: chosenPaymentMethod,
                 custom: codeClient
             }).then((res) => {
                 console.log(res)
+                console.log('setting card as default done')
             }).catch((err) => {
                 console.log(err)
             })
@@ -151,6 +156,7 @@ const PaymentForm = ({ handlePayment }) => {
         setIsLoading(true)
         //1 time payment 
         if (formValue === 1) {
+            console.log('payment processing')
             const paymentItentData = {
                 nomSociete: nomSociete,
                 codeArticle: codeArticle,
@@ -184,7 +190,7 @@ const PaymentForm = ({ handlePayment }) => {
             const priceData = {
                 amount: montant * 100,
                 interval: interval,
-                interval_count: interval === 'month' ? 12 : null
+                interval_count: invervalCount
             }
             console.log('creating price', priceData)
 
@@ -220,7 +226,6 @@ const PaymentForm = ({ handlePayment }) => {
     }
 
     async function confirmPayment(paymentIntent, paymentMethod) {
-        console.log(paymentIntent, paymentMethod)
         stripe.confirmCardPayment(paymentIntent.clientSecret, {
             payment_method: paymentMethod
         })
@@ -229,6 +234,7 @@ const PaymentForm = ({ handlePayment }) => {
                     if (res.paymentIntent.status === 'succeeded') {
                         //ridirect
                         setSucceeded("Paiement réussit")
+                        setPaymentIntent(null)
                     }
                 }
                 if (res.error) {
@@ -245,7 +251,6 @@ const PaymentForm = ({ handlePayment }) => {
                 setIsLoading(false)
             })
     }
-
     useEffect(() => {
         if (codeClient !== '') {
             setGetCustomerDisabled(false)
@@ -254,7 +259,16 @@ const PaymentForm = ({ handlePayment }) => {
 
     function getPaymentMethod() {
         axios.get(env.URL + 'customer/' + codeClient).then((res) => {
+            console.log(res)
             setCards(res.data.entity)
+            if (res.data.entity.length > 0) {
+                const findCardDefault = res.data.entity.filter(card => card.default === true)
+                if (findCardDefault) {
+                    setCardDefault(findCardDefault[0].id)
+                } else {
+                    setCardDefault(null)
+                }
+            }
         }).catch((err) => {
             console.log(err)
         })
@@ -291,7 +305,7 @@ const PaymentForm = ({ handlePayment }) => {
                             <div style={{ display: 'flex', justifyContent: '', alignItems: 'center' }}>
                                 <label style={{ width: '100%' }}>
                                     Code client:
-                                    <input type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
+                                    <Form.Control type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
                                 </label>
 
                                 <Button variant="success" onClick={() => getPaymentMethod()} disabled={getCustomerDisabled} style={{ height: 'fit-content', display: 'flex', marginTop: '15px' }}>
@@ -312,13 +326,13 @@ const PaymentForm = ({ handlePayment }) => {
                                     <div>
                                         <label style={{ width: '100%' }}>
                                             Nom de la société:
-                                            <input type="text" name="nomSociete" value={nomSociete} onChange={(e) => { setNomsociete(e.target.value) }} />
+                                            <Form.Control type="text" name="nomSociete" value={nomSociete} onChange={(e) => { setNomsociete(e.target.value) }} />
                                         </label >
                                     </div>
                                     <div>
                                         <label style={{ width: '100%' }}>
                                             Code d'article:
-                                            <input type="text" name="codeArticle" value={codeArticle} onChange={(e) => { setCodeArticle(e.target.value) }} />
+                                            <Form.Control type="text" name="codeArticle" value={codeArticle} onChange={(e) => { setCodeArticle(e.target.value) }} />
                                         </label>
                                     </div>
                                 </>
@@ -328,22 +342,26 @@ const PaymentForm = ({ handlePayment }) => {
                                     <div>
                                         <label style={{ width: '100%' }}>
                                             Code contrat:
-                                            <input type="text" name="codecontrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
+                                            <Form.Control type="text" name="codeContrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
                                         </label>
                                     </div>
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <label style={{ width: interval === 'week' ? '100%' : (interval === 'month' ? '45%' : '30%') }}>
-                                            Intervalle:
+                                        <label style={{ width: interval === 'week' ? '45%' : (interval === 'month' ? '30%' : '20%') }}>
+                                            Interval:
                                             <Form.Select name="interval" onChange={(e) => { setInterval(e.target.value) }}>
                                                 <option value={'week'}>Hebdomadaire</option>
                                                 <option value={'month'}>Mensuel</option>
                                                 <option value={'year'}>Annuel</option>
                                             </Form.Select>
                                         </label>
+                                        <label style={{ width: interval === 'week' ? '45%' : (interval === 'month' ? '30%' : '20%') }}>
+                                            Interval count:
+                                            <Form.Control type="number" name="intervalCount" value={invervalCount} onChange={(e) => { setIntervalCount(e.target.value) }} />
+                                        </label>
                                         {interval && interval !== 'week' &&
                                             <>
                                                 {interval === 'year' &&
-                                                    <label style={{ width: '30%' }}>
+                                                    <label style={{ width: '20%' }}>
                                                         Mois :
                                                         <Form.Select name="paymentMonth" onChange={(e) => { setPaymentMonth(e.target.value) }}>
                                                             <option value={1}>Janvier</option>
@@ -361,7 +379,7 @@ const PaymentForm = ({ handlePayment }) => {
                                                         </Form.Select>
                                                     </label>
                                                 }
-                                                <label style={{ width: interval === 'month' ? '45%' : '30%' }}>
+                                                <label style={{ width: interval === 'month' ? '30%' : '20%' }}>
                                                     Jour :
                                                     <Form.Select name="paymentDay" onChange={(e) => { setPaymentDay(e.target.value) }}>
                                                         {dayOptions.map((day, i) => {
@@ -379,7 +397,7 @@ const PaymentForm = ({ handlePayment }) => {
 
                             <label style={{ width: '100%' }}>
                                 Montant (en €):
-                                <input type="number" step="0.01" name="montant" value={montant} onChange={(e) => { setMontant(e.target.value) }} />
+                                <Form.Control type="number" step="0.01" name="montant" value={montant} onChange={(e) => { setMontant(e.target.value) }} />
                             </label>
 
                             {/* CB */}
@@ -482,7 +500,7 @@ const PaymentForm = ({ handlePayment }) => {
                         </div>
                     </div>
 
-                    <div className='check-box-save-card' onClick={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}>
+                    {(!cardDefault || (cardDefault && cardDefault !== card)) && <div className='check-box-save-card' onClick={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}>
                         <Form.Check
                             type="checkbox"
                             checked={setAsDefaultCard}
@@ -492,7 +510,7 @@ const PaymentForm = ({ handlePayment }) => {
 
                         Définir cette carte comme méthode de paiement par défaut
                     </div>
-
+                    }
                     <Button type="submit" variant="success" style={{ cursor: 'pointer', minWidth: '150px', height: 40, margin: 0 }}  >
                         Payer {montant > 0 && montant + ' €'}
                     </Button>
