@@ -145,3 +145,11 @@ button:hover {
 .check-box-save-card:hover {
     color: #007185;
 }
+
+.notice {
+    padding: 0px 10px 10px 10px;
+    color: rgb(117, 117, 117);
+    font-style: italic;
+    text-align: left;
+    margin-left: 10px;
+}

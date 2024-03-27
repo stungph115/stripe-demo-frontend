@@ -8,7 +8,7 @@ const stripePromise = loadStripe(env.PUBLIC_KEY_STRIPE);
 function App() {
   return (
     <div className="App">
-      <h1>Stripe Payment Demo</h1>
+      <h1 style={{ padding: 20 }}>Stripe Payment Demo</h1>
       <Elements stripe={stripePromise}>
         <PaymentForm />
       </Elements>

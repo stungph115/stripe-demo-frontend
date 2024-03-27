@@ -98,13 +98,18 @@ const PaymentForm = ({ handlePayment }) => {
                          name: 'Jenny Rosen',
                      }, */
                 })
+                console.log(newPaymentMethod)
                 chosenPaymentMethod = newPaymentMethod.paymentMethod.id
+                console.log(chosenPaymentMethod)
+                const params = {
+                    codeClient: codeClient,
+                    paymentMethod: chosenPaymentMethod
+                }
                 //save card
                 if (saveNewCard) {
-                    await axios.post(env.URL + 'customer', {
-                        codeClient: codeClient,
-                        paymentMethod: chosenPaymentMethod
-                    }).then((res) => {
+                    console.log("params", params)
+
+                    await axios.post(env.URL + 'customer', params).then((res) => {
                         console.log("res axios attach payment: ", res)
                     }).catch((err) => {
                         console.log("error axios attach payment: ", err)
@@ -112,13 +117,13 @@ const PaymentForm = ({ handlePayment }) => {
                             if (err.response.data.message === 'STRIPE_ERROR_card_declined') {
                                 setError("La carte a été refusée")
                                 setIsLoading(false)
-                            } if (err.response.data.message === 'STRIPE_ERROR_incorrect_cvc') {
+                            } else if (err.response.data.message === 'STRIPE_ERROR_incorrect_cvc') {
                                 setError("Code cryptogramme visuel incorrect")
                                 setIsLoading(false)
-                            } if (err.response.data.message === 'STRIPE_ERROR_processing_error') {
+                            } else if (err.response.data.message === 'STRIPE_ERROR_processing_error') {
                                 setError("Une erreur s'est produite lors du traitement de la carte")
                                 setIsLoading(false)
-                            } if (err.response.data.message === 'STRIPE_ERROR_incorrect_number') {
+                            } else if (err.response.data.message === 'STRIPE_ERROR_incorrect_number') {
                                 setError("Numéro de la carte est incorrect")
                                 setIsLoading(false)
                             } else {
@@ -202,6 +207,7 @@ const PaymentForm = ({ handlePayment }) => {
                     //create subscription
                     const subscriptionData = {
                         codeClient: codeClient,
+                        codeContrat: codeContrat,
                         price: res.data.data,
                         payment_method: chosenPaymentMethod,
                         paymentDate: interval === 'week' ? null : paymentDay,
@@ -289,6 +295,15 @@ const PaymentForm = ({ handlePayment }) => {
             setCard(defaultCard.id)
         }
     }, [cards])
+    //day month validator
+    useEffect(() => {
+        if (paymentMonth == 2 && paymentDay > 28) {
+            setPaymentDay(28)
+        }
+        if (['4', '6', '9', '11'].includes(paymentMonth) && paymentDay == 31) {
+            setPaymentDay(30)
+        }
+    }, [paymentMonth])
     return (
         <Form onSubmit={handleSubmit}>
 
@@ -356,7 +371,7 @@ const PaymentForm = ({ handlePayment }) => {
                                         </label>
                                         <label style={{ width: interval === 'week' ? '45%' : (interval === 'month' ? '30%' : '20%') }}>
                                             Interval count:
-                                            <Form.Control type="number" name="intervalCount" value={invervalCount} onChange={(e) => { setIntervalCount(e.target.value) }} />
+                                            <Form.Control type="number" step='1' name="intervalCount" value={invervalCount} onChange={(e) => { setIntervalCount(e.target.value) }} />
                                         </label>
                                         {interval && interval !== 'week' &&
                                             <>
@@ -381,7 +396,7 @@ const PaymentForm = ({ handlePayment }) => {
                                                 }
                                                 <label style={{ width: interval === 'month' ? '30%' : '20%' }}>
                                                     Jour :
-                                                    <Form.Select name="paymentDay" onChange={(e) => { setPaymentDay(e.target.value) }}>
+                                                    <Form.Select name="paymentDay" value={paymentDay} onChange={(e) => { setPaymentDay(e.target.value) }}>
                                                         {dayOptions.map((day, i) => {
                                                             return (
                                                                 <option value={day} key={i}>{day}</option>
@@ -389,6 +404,35 @@ const PaymentForm = ({ handlePayment }) => {
                                                         })}
                                                     </Form.Select>
                                                 </label>
+                                            </>
+                                        }
+                                    </div>
+                                    <div className='notice'>
+                                        <>* Abonnement
+                                            {invervalCount && invervalCount > 1 &&
+                                                <> tous les {invervalCount} </>
+                                            }
+                                            {interval === 'week' && ((invervalCount && invervalCount > 1) ?
+                                                <> semaines </> : < > hebdomadaire </>)
+                                            }
+                                            {interval === 'month' && ((invervalCount && invervalCount > 1) ?
+                                                <> mois </> : <> mensuel </>)
+                                            }
+                                            {interval === 'year' && ((invervalCount && invervalCount > 1) ?
+                                                <> années </> : <> annuel </>)
+                                            }
+                                            de {montant > 0 && montant + ' €'}
+                                        </>
+                                        <br />
+                                        {interval !== 'week' &&
+                                            <>
+                                                ** Prélèvement définie est
+                                                {interval === 'month' ?
+                                                    <> au {paymentDay > 1 ? paymentDay + 'ème' : '1er'} jour du mois {paymentDay == 31 && "(ou le dernier jour du mois)"}  {paymentDay == 30 && "(ou le dernier jour de février)"}</>
+                                                    :
+                                                    <> le {paymentDay}/{paymentMonth} de chaque année</>
+                                                }
+
                                             </>
                                         }
                                     </div>
@@ -512,7 +556,28 @@ const PaymentForm = ({ handlePayment }) => {
                     </div>
                     }
                     <Button type="submit" variant="success" style={{ cursor: 'pointer', minWidth: '150px', height: 40, margin: 0 }}  >
-                        Payer {montant > 0 && montant + ' €'}
+                        {formValue === 1 ?
+                            <>Payer {montant > 0 && montant + ' €'}</>
+
+                            :
+                            <>Abonner
+                                {invervalCount && invervalCount > 1 &&
+                                    <> tous les {invervalCount} </>
+                                }
+                                {interval === 'week' && ((invervalCount && invervalCount > 1) ?
+                                    <> semaines </> : < > hebdomadaire </>)
+                                }
+                                {interval === 'month' && ((invervalCount && invervalCount > 1) ?
+                                    <> mois </> : <> mensuel </>)
+                                }
+                                {interval === 'year' && ((invervalCount && invervalCount > 1) ?
+                                    <> années </> : <> annuel </>)
+                                }
+                                de {montant > 0 && montant + ' €'}
+                            </>
+
+                        }
+
                     </Button>
                 </>)
             }
