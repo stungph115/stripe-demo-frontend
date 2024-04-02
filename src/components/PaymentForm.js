@@ -33,8 +33,8 @@ const PaymentForm = ({ handlePayment }) => {
     const [formValue, setFormValue] = useState(1)
     const [codeContrat, setCodecontrat] = useState('ABCD1234')
     const [interval, setInterval] = useState('week')
-    const [paymentDay, setPaymentDay] = useState(1)
-    const [paymentMonth, setPaymentMonth] = useState(1)
+    const [paymentDay, setPaymentDay] = useState('1')
+    const [paymentMonth, setPaymentMonth] = useState('1')
     var daysInMonth = Array.from({ length: 31 }, (_, index) => index + 1)
     const [dayOptions, setDayOptions] = useState(daysInMonth)
     const [cardDefault, setCardDefault] = useState(null)
@@ -71,6 +71,11 @@ const PaymentForm = ({ handlePayment }) => {
         if (!stripe || !elements) {
             return
         }
+        console.log('interval', interval)
+        console.log('paymentMonth', paymentMonth)
+        console.log('paymentDay', paymentDay)
+        console.log('invervalCount', invervalCount)
+
         if (
             (formValue === 1 && (codeArticle === '' || nomSociete === '' || codeClient === '' || montant === ''))
             ||
@@ -90,6 +95,7 @@ const PaymentForm = ({ handlePayment }) => {
         var chosenPaymentMethod
         if (!card) {
             //add new card
+            console.log("adding new card")
             try {
                 const newPaymentMethod = await stripe.createPaymentMethod({
                     type: 'card',
@@ -146,7 +152,7 @@ const PaymentForm = ({ handlePayment }) => {
             return
         }
         //set card as default
-        if (setAsDefaultCard) {
+        if (setAsDefaultCard || formValue === 2) {
             console.log('setting card as default')
             axios.post(env.URL + 'customer/update-default-pm', {
                 paymentMethod: chosenPaymentMethod,
@@ -210,16 +216,24 @@ const PaymentForm = ({ handlePayment }) => {
                         codeContrat: codeContrat,
                         price: res.data.data,
                         payment_method: chosenPaymentMethod,
-                        paymentDate: interval === 'week' ? null : paymentDay,
-                        paymentMonth: interval === 'week' ? null : paymentMonth
+                        paymentDate: interval === 'week' ? null : parseInt(paymentDay),
+                        paymentMonth: (interval === 'week' || interval === 'month') ? null : parseInt(paymentMonth)
                     }
 
                     setLoadingStatus("Creating subscription...")
                     axios.post(env.URL + 'subscription/create', subscriptionData).then(async (res) => {
                         console.log('create subscription res: ', res)
+                        if (res.data.data.status === 'active') {
+                            setSucceeded("Abonnement activé")
+                            setIsLoading(false)
+                        } else {
+                            setError("Abonnement incomplete")
+                            setIsLoading(false)
+                        }
 
                     }).catch((error) => {
                         console.log(error)
+                        setError(error.response.data.message)
                         setIsLoading(false)
                     })
                 }
@@ -304,6 +318,20 @@ const PaymentForm = ({ handlePayment }) => {
             setPaymentDay(30)
         }
     }, [paymentMonth])
+    /*  useEffect(() => {
+ 
+         if (interval === 'week') {
+             setPaymentDay(null)
+             setPaymentMonth(null)
+         }
+         if (interval === 'month') {
+             setPaymentMonth(null)
+         }
+     }, [interval])
+     console.log('interval', interval)
+     console.log('paymentMonth', paymentMonth)
+     console.log('paymentDay', paymentDay)
+     console.log('invervalCount', invervalCount) */
     return (
         <Form onSubmit={handleSubmit}>
 
@@ -363,7 +391,7 @@ const PaymentForm = ({ handlePayment }) => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                         <label style={{ width: interval === 'week' ? '45%' : (interval === 'month' ? '30%' : '20%') }}>
                                             Interval:
-                                            <Form.Select name="interval" onChange={(e) => { setInterval(e.target.value) }}>
+                                            <Form.Select name="interval" onChange={(e) => { setInterval(e.target.value) }} value={interval}>
                                                 <option value={'week'}>Hebdomadaire</option>
                                                 <option value={'month'}>Mensuel</option>
                                                 <option value={'year'}>Annuel</option>
@@ -378,7 +406,7 @@ const PaymentForm = ({ handlePayment }) => {
                                                 {interval === 'year' &&
                                                     <label style={{ width: '20%' }}>
                                                         Mois :
-                                                        <Form.Select name="paymentMonth" onChange={(e) => { setPaymentMonth(e.target.value) }}>
+                                                        <Form.Select value={paymentMonth} name="paymentMonth" onChange={(e) => { setPaymentMonth(e.target.value) }} >
                                                             <option value={1}>Janvier</option>
                                                             <option value={2}>Février</option>
                                                             <option value={3}>Mars</option>

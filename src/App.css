@@ -32,7 +32,30 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
+}
+
+.route {
+  font-size: 34px;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-weight: 100;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.route:hover {
+  font-size: 34px;
+  text-decoration: underline;
+  /* font-style: italic; */
+}
+
+.route.choosen {
+  font-size: 34px;
+  font-weight: 600;
+  text-decoration: underline;
+  opacity: 1;
 }
