@@ -14,7 +14,7 @@ function App() {
     <div className="App">
       <h1 style={{ padding: 20 }}>Stripe Payment Demo</h1>
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <div onClick={() => setRoute(1)} className={route === 1 ? 'route choosen' : 'route'}>Check out forms</div>
+        <div onClick={() => setRoute(1)} className={route === 1 ? 'route choosen' : 'route'}>Check out</div>
         <div onClick={() => setRoute(2)} className={route === 2 ? 'route choosen' : 'route'}>Listing</div>
       </div>
       <Elements stripe={stripePromise}>

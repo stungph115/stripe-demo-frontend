@@ -1,7 +1,6 @@
 /* src/components/PaymentForm.css */
 
-form,
-.listing {
+form {
     width: fit-content;
     margin: auto;
     padding: 20px;
