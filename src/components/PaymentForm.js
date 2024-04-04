@@ -102,6 +102,7 @@ const PaymentForm = ({ handlePayment }) => {
                     card: cardElement,
                     /*  billing_details: {
                          name: 'Jenny Rosen',
+                         email:'',
                      }, */
                 })
                 console.log(newPaymentMethod)
@@ -113,8 +114,6 @@ const PaymentForm = ({ handlePayment }) => {
                 }
                 //save card
                 if (saveNewCard) {
-                    console.log("params", params)
-
                     await axios.post(env.URL + 'customer', params).then((res) => {
                         console.log("res axios attach payment: ", res)
                     }).catch((err) => {
