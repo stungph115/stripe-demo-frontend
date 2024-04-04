@@ -7,7 +7,7 @@ form {
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(254, 220, 220, 0.1);
-    min-width: 300px;
+    min-width: 600px;
 }
 
 div.form-check {
@@ -97,7 +97,7 @@ button:hover {
     padding: 10px;
     width: 100%;
     background: #eaeaea;
-    margin: 10px;
+    margin-block-end: 10px;
     border-radius: 5px;
     cursor: pointer;
 }

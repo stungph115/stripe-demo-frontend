@@ -501,7 +501,7 @@ const PaymentForm = ({ handlePayment }) => {
                                             )
                                         })}
 
-                                        <div onClick={() => newCard()} className='new-card-button'>Ou ajouter une nouvelle card</div>
+                                        <div onClick={() => newCard()} className='new-card-button'>Payer avec une nouvelle card</div>
                                     </>
 
                                 }

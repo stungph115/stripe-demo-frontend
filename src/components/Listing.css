@@ -5,7 +5,7 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(254, 220, 220, 0.1);
-    min-width: 300px;
+    min-width: 600px;
 }
 
 .client-input {
@@ -55,4 +55,21 @@
     margin: 20px;
     border: 1px solid #e6e6e6;
     border-radius: 5px;
+}
+
+.new-card-button-listing {
+    width: 100%;
+    background-color: #eaeaea;
+    border-radius: 5px;
+    /* Adjust size as needed */
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    /* Smooth transition for hover effect */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.new-card-button-listing:hover {
+    background-color: rgb(255, 173, 107)
 }

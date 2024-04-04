@@ -1,4 +1,4 @@
-import { faArrowsRotate, faCheckCircle, faCreditCard, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons'
+import { faArrowsRotate, faCheckCircle, faCircle, faCreditCard, faL, faPlus, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import axios from 'axios'
 import React, { useEffect, useState } from 'react'
@@ -7,6 +7,7 @@ import { env } from '../env'
 import { faCcAmex, faCcMastercard, faCcVisa } from '@fortawesome/free-brands-svg-icons'
 import './Listing.css'
 import { CardCvcElement, CardExpiryElement, CardNumberElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { faCirclePlay, faCircleXmark } from '@fortawesome/free-regular-svg-icons'
 
 function Listing() {
     const stripe = useStripe()
@@ -31,7 +32,8 @@ function Listing() {
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
     const [setAsDefaultCard, setSetAsDefaultCard] = useState(false)
-    console.log(subscriptions)
+    const [subscriptionDetail, setSubscriptionDetail] = useState(null)
+    const [pastInvoices, setPastInvoices] = useState([])
     useEffect(() => {
         if (codeClient !== '') {
             setGetCustomerDisabled(false)
@@ -115,12 +117,30 @@ function Listing() {
 
     }
 
-    const handleRowClick = (index, idStripe) => {
+    const handleRowClickPayment = (index, idStripe) => {
+        setIsLoading(true)
         setExpandedRow(expandedRow === index ? null : index)
         axios.get(env.URL + 'payments/stripe/' + idStripe).then((res) => {
             console.log(res)
             setPaymentDetail(res.data)
+            setIsLoading(false)
         }).catch((err) => {
+            setIsLoading(false)
+            console.log(err)
+        })
+    }
+    const handleRowClickSubscription = (index, idStripe) => {
+        setIsLoading(true)
+        setExpandedRow(expandedRow === index ? null : index)
+        axios.get(env.URL + 'subscription/stripe/' + idStripe).then((res) => {
+            console.log(res)
+            setSubscriptionDetail(res.data)
+            if (res.data.pastInvoices) {
+                setPastInvoices(res.data.pastInvoices)
+            }
+            setIsLoading(false)
+        }).catch((err) => {
+            setIsLoading(false)
             console.log(err)
         })
     }
@@ -252,11 +272,19 @@ function Listing() {
             setIsLoading(false)
         })
     }
+    function getFrenchMonthName(monthNumber) {
+        const months = [
+            'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+        ];
+        return months[monthNumber - 1]
+    }
+
     return (
         <div className='listing'>
 
-            <div className='client-input'>
-                <label style={{ width: '100%' }}>
+            <div className='client-input' style={{ display: 'flex', justifyContent: 'center' }}>
+                <label style={{ width: 'fit-content' }}>
                     Code client:
                     <Form.Control type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
                 </label>
@@ -264,9 +292,9 @@ function Listing() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <div onClick={() => setSubRoute(1)} className={subRoute === 1 ? 'sub-route choosen' : 'sub-route'}>Méthode de paiement</div>
-                <div onClick={() => setSubRoute(2)} className={subRoute === 2 ? 'sub-route choosen' : 'sub-route'}>Mes paiement</div>
-                <div onClick={() => setSubRoute(3)} className={subRoute === 3 ? 'sub-route choosen' : 'sub-route'}>Mes subscription</div>
+                <div onClick={() => setSubRoute(1)} className={subRoute === 1 ? 'sub-route choosen' : 'sub-route'}>Méthodes de paiement</div>
+                <div onClick={() => setSubRoute(2)} className={subRoute === 2 ? 'sub-route choosen' : 'sub-route'}>Mes paiements</div>
+                <div onClick={() => setSubRoute(3)} className={subRoute === 3 ? 'sub-route choosen' : 'sub-route'}>Mes abonnements</div>
             </div>
             {subRoute === 1 &&
                 <>
@@ -294,13 +322,13 @@ function Listing() {
                                             <div className='card-delete' onClick={() => setShowDeteleCard(true)}><FontAwesomeIcon icon={faTrash} /></div>
 
                                         </div>
-                                        <Modal size='xl' show={showDeteleCard} onHide={() => setShowDeteleCard(false)} centered>
+                                        <Modal size='lg' show={showDeteleCard} onHide={() => setShowDeteleCard(false)} centered>
                                             <Modal.Header closeButton className="px-4">
                                                 <Modal.Title className="ms-auto"> Suppression d'une carte</Modal.Title>
                                             </Modal.Header>
                                             <Modal.Body className="d-flex justify-content-center align-items-center" >
                                                 Voulez-vous retirer cette carte ?
-                                                <div className={'credit-card-item'} key={i} style={{ width: '100%' }}>
+                                                <div className={'credit-card-item'} key={i} style={{ width: '60%', marginLeft: 30 }}>
                                                     <FontAwesomeIcon icon={getIconByBrand(item.display_brand)} style={{ width: '10%' }} size='xl' className='card-brand' />
                                                     <div className='card-last4' style={{ width: '40%' }}>**** **** **** {item.last4}</div>
                                                     <div className='card-exp' style={{ width: '10%' }}>{item.exp_month > 9 ? item.exp_month : '0' + item.exp_month}/{String(item.exp_year).slice(-2)}</div>
@@ -326,7 +354,10 @@ function Listing() {
                         :
                         <div className='empty-text'>Aucune méthode de paiement enregistrée</div>
                     }
-                    <div onClick={() => setShowCardInput(true)} className='new-card-button'>Ou ajouter une nouvelle carte</div>
+                    <div onClick={() => setShowCardInput(true)} className='new-card-button-listing'>
+                        <FontAwesomeIcon icon={faCircleXmark} style={{ color: 'black', padding: 10, transform: 'rotate(45deg)' }} size='xl' />
+                        Ajouter une carte
+                    </div>
                     <Modal size='xl' show={showCardInput} onHide={() => setShowCardInput(false)} centered>
                         <Modal.Header closeButton className="px-4">
                             <Modal.Title className="ms-auto"> Ajouter une carte</Modal.Title>
@@ -425,7 +456,7 @@ function Listing() {
                                 <tbody>
                                     {payments.map((payment, index) => (
                                         <React.Fragment key={index}>
-                                            <tr onClick={() => handleRowClick(index, payment.stripId)} style={{ cursor: 'pointer' }}>
+                                            <tr onClick={() => handleRowClickPayment(index, payment.stripId)} style={{ cursor: 'pointer' }}>
                                                 <td>{payment.company}</td>
                                                 <td>{payment.code_article}</td>
                                                 <td>{formatMontant(payment.montant)} €</td>
@@ -436,31 +467,37 @@ function Listing() {
                                             {expandedRow === index &&
                                                 <tr>
                                                     <td colSpan={6} style={{ textAlign: 'left', padding: 20 }}>
-                                                        {paymentDetail && paymentDetail.last_payment_error &&
+                                                        {isLoading ?
+                                                            <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%' }} size='xl' />
+                                                            :
                                                             <>
-                                                                <div> <strong>Decline code: </strong> {paymentDetail.last_payment_error.decline_code}</div>
-                                                                <div style={{ display: "flex", alignItems: 'center' }}>
-                                                                    <strong> Méthode de paiemnt ustilisé: </strong>
-                                                                    <div className='credit-card-item' style={{ width: 'fit-content' }}>
-                                                                        <FontAwesomeIcon icon={getIconByBrand(paymentDetail.last_payment_error.payment_method.card.display_brand)} size='xl' className='card-brand' />
-                                                                        <div className='card-last4' >**** **** **** {paymentDetail.last_payment_error.payment_method.card.last4}</div>
-                                                                        <div className='card-exp' >{paymentDetail.last_payment_error.payment_method.card.exp_month > 9 ? paymentDetail.last_payment_error.payment_method.card.exp_month : '0' + paymentDetail.last_payment_error.payment_method.card.exp_month}/{String(paymentDetail.last_payment_error.payment_method.card.exp_year).slice(-2)}</div>
+                                                                {paymentDetail && paymentDetail.last_payment_error &&
+                                                                    <>
+                                                                        <div> <strong>Decline code: </strong> {paymentDetail.last_payment_error.decline_code}</div>
+                                                                        <div style={{ display: "flex", alignItems: 'center' }}>
+                                                                            <strong> Méthode de paiemnt ustilisé: </strong>
+                                                                            <div className='credit-card-item' style={{ width: 'fit-content' }}>
+                                                                                <FontAwesomeIcon icon={getIconByBrand(paymentDetail.last_payment_error.payment_method.card.display_brand)} size='xl' className='card-brand' />
+                                                                                <div className='card-last4' >**** **** **** {paymentDetail.last_payment_error.payment_method.card.last4}</div>
+                                                                                <div className='card-exp' >{paymentDetail.last_payment_error.payment_method.card.exp_month > 9 ? paymentDetail.last_payment_error.payment_method.card.exp_month : '0' + paymentDetail.last_payment_error.payment_method.card.exp_month}/{String(paymentDetail.last_payment_error.payment_method.card.exp_year).slice(-2)}</div>
+                                                                            </div>
+                                                                        </div>
+
+                                                                    </>
+                                                                }
+                                                                {paymentDetail && paymentDetail.status === 'succeeded' &&
+                                                                    <div style={{ display: "flex", alignItems: 'center' }}>
+                                                                        <strong> Méthode de paiemnt ustilisé: </strong>
+                                                                        <div className='credit-card-item' style={{ width: 'fit-content' }}>
+
+                                                                            <FontAwesomeIcon icon={getIconByBrand(paymentDetail.payment_method.card.display_brand)} size='xl' className='card-brand' />
+                                                                            <div className='card-last4' >**** **** **** {paymentDetail.payment_method.card.last4}</div>
+                                                                            <div className='card-exp' >{paymentDetail.payment_method.card.exp_month > 9 ? paymentDetail.payment_method.card.exp_month : '0' + paymentDetail.payment_method.card.exp_month}/{String(paymentDetail.payment_method.card.exp_year).slice(-2)}</div>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
 
+                                                                }
                                                             </>
-                                                        }
-                                                        {paymentDetail && paymentDetail.status === 'succeeded' &&
-                                                            <div style={{ display: "flex", alignItems: 'center' }}>
-                                                                <strong> Méthode de paiemnt ustilisé: </strong>
-                                                                <div className='credit-card-item' style={{ width: 'fit-content' }}>
-
-                                                                    <FontAwesomeIcon icon={getIconByBrand(paymentDetail.payment_method.card.display_brand)} size='xl' className='card-brand' />
-                                                                    <div className='card-last4' >**** **** **** {paymentDetail.payment_method.card.last4}</div>
-                                                                    <div className='card-exp' >{paymentDetail.payment_method.card.exp_month > 9 ? paymentDetail.payment_method.card.exp_month : '0' + paymentDetail.payment_method.card.exp_month}/{String(paymentDetail.payment_method.card.exp_year).slice(-2)}</div>
-                                                                </div>
-                                                            </div>
-
                                                         }
                                                     </td>
                                                 </tr>
@@ -495,7 +532,7 @@ function Listing() {
                                 <tbody>
                                     {subscriptions.map((subscription, index) => (
                                         <React.Fragment key={index}>
-                                            <tr onClick={() => handleRowClick(index, subscription.stripId)} style={{ cursor: 'pointer' }}>
+                                            <tr onClick={() => handleRowClickSubscription(index, subscription.stripId)} style={{ cursor: 'pointer' }}>
                                                 <td>{subscription.code_contrat}</td>
                                                 <td>{formatInterval(subscription.interval)}</td>
                                                 <td>{subscription.interval_count}</td>
@@ -506,33 +543,73 @@ function Listing() {
                                             </tr>
                                             {expandedRow === index &&
                                                 <tr>
-                                                    <td colSpan={6} style={{ textAlign: 'left', padding: 20 }}>
-                                                        {/*  {paymentDetail && paymentDetail.last_payment_error &&
+                                                    <td colSpan={7} style={{ textAlign: 'left', padding: 20 }}>
+                                                        {isLoading ?
+                                                            <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%' }} size='xl' />
+                                                            :
                                                             <>
-                                                                <div> <strong>Decline code: </strong> {paymentDetail.last_payment_error.decline_code}</div>
-                                                                <div style={{ display: "flex", alignItems: 'center' }}>
-                                                                    <strong> Méthode de paiemnt ustilisé: </strong>
-                                                                    <div className='credit-card-item' style={{ width: 'fit-content' }}>
-                                                                        <FontAwesomeIcon icon={getIconByBrand(paymentDetail.last_payment_error.payment_method.card.display_brand)} size='xl' className='card-brand' />
-                                                                        <div className='card-last4' >**** **** **** {paymentDetail.last_payment_error.payment_method.card.last4}</div>
-                                                                        <div className='card-exp' >{paymentDetail.last_payment_error.payment_method.card.exp_month > 9 ? paymentDetail.last_payment_error.payment_method.card.exp_month : '0' + paymentDetail.last_payment_error.payment_method.card.exp_month}/{String(paymentDetail.last_payment_error.payment_method.card.exp_year).slice(-2)}</div>
+                                                                <div style={{ display: 'flex' }}>
+                                                                    <div><strong>Méthode de paiement:</strong></div>
+                                                                    <div style={{ marginLeft: 5 }}>
+                                                                        Défaut
                                                                     </div>
                                                                 </div>
-
+                                                                {subscriptionDetail && subscriptionDetail.billing_cycle_anchor &&
+                                                                    <div style={{ display: 'flex' }}>
+                                                                        <div><strong>Cycle de Facturation:</strong></div>
+                                                                        <div style={{ marginLeft: 5 }}>
+                                                                            {new Date(subscriptionDetail.billing_cycle_anchor * 1000).toLocaleString()}
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                                {subscriptionDetail && subscriptionDetail.billing_cycle_anchor_config &&
+                                                                    <div style={{ display: 'flex' }}>
+                                                                        <div><strong>Date de facturation choisi:</strong></div>
+                                                                        <div style={{ marginLeft: 5 }}>
+                                                                            {subscriptionDetail.billing_cycle_anchor_config.day_of_month && subscriptionDetail.billing_cycle_anchor_config.month &&
+                                                                                <>Le {subscriptionDetail.billing_cycle_anchor_config.day_of_month} {getFrenchMonthName(subscriptionDetail.billing_cycle_anchor_config.month)} de chaque année</>
+                                                                            }
+                                                                            {subscriptionDetail.billing_cycle_anchor_config.day_of_month && !subscriptionDetail.billing_cycle_anchor_config.month &&
+                                                                                <>Tous les {subscriptionDetail.billing_cycle_anchor_config.day_of_month === 1 ? '1er' : subscriptionDetail.billing_cycle_anchor_config.day_of_month + 'ème'} jour de chaque mois</>
+                                                                            }
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                                {subscriptionDetail && subscriptionDetail.nextBillingDate &&
+                                                                    <div style={{ display: 'flex' }}>
+                                                                        <div><strong>Prochain date de facturation:</strong></div>
+                                                                        <div style={{ marginLeft: 5 }}>
+                                                                            {formatDateTime(subscriptionDetail.nextBillingDate)}
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                                <strong>Dernières facturations:</strong>
+                                                                {pastInvoices &&
+                                                                    <div style={{ padding: 10 }}>
+                                                                        <Table >
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>Date</th>
+                                                                                    <th>Montant</th>
+                                                                                    <th>Status</th>
+                                                                                    <th>Méthode de paiemet</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {pastInvoices.map((invoice) => (
+                                                                                    <tr key={invoice.id}>
+                                                                                        <td>{(new Date(invoice.created * 1000).toLocaleDateString())}</td>
+                                                                                        <td>{formatMontant(invoice.amount_due)} €</td>
+                                                                                        <td>{invoice.payment_intent.status === 'succeeded' ? 'Payé' : 'Impayé'}</td>
+                                                                                        {invoice.payment_intent.card ? <td>{invoice.payment_intent.card.last4}</td> : <td>Défaut</td>}
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </Table>
+                                                                    </div>
+                                                                }
                                                             </>
                                                         }
-                                                        {paymentDetail && paymentDetail.status === 'succeeded' &&
-                                                            <div style={{ display: "flex", alignItems: 'center' }}>
-                                                                <strong> Méthode de paiemnt ustilisé: </strong>
-                                                                <div className='credit-card-item' style={{ width: 'fit-content' }}>
-
-                                                                    <FontAwesomeIcon icon={getIconByBrand(paymentDetail.payment_method.card.display_brand)} size='xl' className='card-brand' />
-                                                                    <div className='card-last4' >**** **** **** {paymentDetail.payment_method.card.last4}</div>
-                                                                    <div className='card-exp' >{paymentDetail.payment_method.card.exp_month > 9 ? paymentDetail.payment_method.card.exp_month : '0' + paymentDetail.payment_method.card.exp_month}/{String(paymentDetail.payment_method.card.exp_year).slice(-2)}</div>
-                                                                </div>
-                                                            </div>
-
-                                                        } */}
                                                     </td>
                                                 </tr>
                                             }
