@@ -1,7 +1,8 @@
 import axios from "axios"
-import { env } from "../env"
+import { env } from "../../env"
 import React, { useEffect, useState } from "react"
 import { Table, Button } from "react-bootstrap"
+import { formatDateTime } from "../utils"
 
 function Admin() {
     const [events, setEvents] = useState([])
@@ -62,7 +63,7 @@ function Admin() {
                                             <td>{event.id}</td>
                                             <td>{event.idStripe}</td>
                                             <td>{event.type}</td>
-                                            <td>{new Date(event.dateCreated).toLocaleDateString()}</td>
+                                            <td>{formatDateTime(event.dateCreated)}</td>
                                         </tr>
                                         {expandedRow === index &&
                                             <tr>

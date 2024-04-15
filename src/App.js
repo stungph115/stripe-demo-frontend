@@ -1,11 +1,11 @@
 import './App.css';
-import PaymentForm from './components/PaymentForm';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { env } from './env';
 import { useState } from 'react';
-import Listing from './components/Listing';
-import Admin from './components/Admin';
+import Listing from './components/listing/Listing';
+import Admin from './components/admin/Admin';
+import PaymentForm from './components/checkout/PaymentForm';
 const stripePromise = loadStripe(env.PUBLIC_KEY_STRIPE);
 
 function App() {

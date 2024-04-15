@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useStripe, useElements, CardNumberElement, CardExpiryElement, CardCvcElement } from '@stripe/react-stripe-js'
 import './PaymentForm.css'
-import { env } from '../env'
 import axios from "axios"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowsRotate, faCheckCircle, faCreditCard, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { Button, Form, ToggleButton, ToggleButtonGroup } from 'react-bootstrap'
 import { faCcVisa, faCcAmex, faCcMastercard } from '@fortawesome/free-brands-svg-icons'
+import { env } from '../../env'
 
 const PaymentForm = ({ handlePayment }) => {
     const codeClientdefault = 'ABCD1234'
