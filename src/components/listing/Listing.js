@@ -30,12 +30,10 @@ function Listing() {
             {subRoute === 1 &&
                 <ListCard codeClient={codeClient} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />
             }
-            {
-                subRoute === 2 &&
+            {subRoute === 2 &&
                 <ListPayment codeClient={codeClient} />
             }
-            {
-                subRoute === 3 &&
+            {subRoute === 3 &&
                 <ListSubscription codeClient={codeClient} />
             }
         </div >

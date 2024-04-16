@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react'
 import { env } from '../../env'
 import { Button, Form, Modal } from 'react-bootstrap'
 import { faCheckCircle, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons'
-import { getIconByBrand } from '../utils'
+import { getIconByBrand } from '../utils/utils'
 
 function ListCard({ codeClient, selectedCard, setSelectedCard }) {
     const stripe = useStripe()
@@ -23,14 +23,14 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
     const [error, setError] = useState(null)
     const [setAsDefaultCard, setSetAsDefaultCard] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
-
+    const [isLoadingList, setIsLoadingList] = useState(false)
     console.log('selectedCard: ', selectedCard)
     console.log(cards)
     useEffect(() => {
         getPaymentMethods(codeClient)
     }, [codeClient])
-    function getPaymentMethods(codeClient) {
-
+    async function getPaymentMethods(codeClient) {
+        setIsLoadingList(true)
         axios.get(env.URL + 'customer/' + codeClient).then((res) => {
             setCards(res.data.entity)
             if (res.data.entity.length > 0) {
@@ -41,7 +41,9 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
                     setCardDefault(null)
                 }
             }
+            setIsLoadingList(false)
         }).catch((err) => {
+            setIsLoadingList(false)
             console.log(err)
         })
     }
@@ -165,148 +167,154 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
         setShowDeteleCard(true)
         setSelectedCard(item)
     }
-    return (
-        <>
-            {cards.length > 0 ?
-                <>
-                    {cards.map((item, i) => {
+    if (isLoadingList) {
+        return (
+            <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%', paddingBlock: 50 }} size='xl' />
+            )
+    } else {
+        return (
+            <>
+                {cards.length > 0 ?
+                    <>
+                        {cards.map((item, i) => {
 
-                        return (
-                            <React.Fragment key={i}>
-                                <div className={selectedCard && selectedCard.id === item.id ? 'credit-card-item choosen' : 'credit-card-item'} style={{ width: '100%' }} onClick={() => setSelectedCard(item)}>
-                                    <FontAwesomeIcon icon={getIconByBrand(item.display_brand)} style={{ width: '10%' }} size='xl' className='card-brand' />
-                                    <div className='card-last4' style={{ width: '40%' }}>**** **** **** {item.last4}</div>
-                                    <div className='card-exp' style={{ width: '10%' }}>{item.exp_month > 9 ? item.exp_month : '0' + item.exp_month}/{String(item.exp_year).slice(-2)}</div>
-                                    {item.id === cardDefault ?
-                                        <div style={{ paddingInline: 10, width: '40%' }}>défaut</div>
-                                        :
-                                        <div className="set-default-text" style={{ paddingInline: 10, width: '40%' }} onClick={() => setDefaultCard(item.id)}>
-                                            {isLoading ?
-                                                <FontAwesomeIcon icon={faSpinner} pulse />
-                                                :
-                                                'définir par défaut'
-                                            }
-                                        </div>
-                                    }
-                                    <div className='card-delete' onClick={() => handleDeleteButtonClick(item)}><FontAwesomeIcon icon={faTrash} /></div>
-
-                                </div>
-
-                            </React.Fragment>
-
-                        )
-                    })}
-                    {selectedCard &&
-                        <Modal size='lg' show={showDeteleCard} onHide={() => setShowDeteleCard(false)} centered>
-                            <Modal.Header closeButton className="px-4">
-                                <Modal.Title className="ms-auto"> Suppression d'une carte</Modal.Title>
-                            </Modal.Header>
-                            <Modal.Body className="d-flex justify-content-center align-items-center" >
-                                Voulez-vous retirer cette carte ?
-                                <div className={'credit-card-item'} style={{ width: '60%', marginLeft: 30 }}>
-                                    <FontAwesomeIcon icon={getIconByBrand(selectedCard.display_brand)} style={{ width: '10%' }} size='xl' className='card-brand' />
-                                    <div className='card-last4' style={{ width: '40%' }}>**** **** **** {selectedCard.last4}</div>
-                                    <div className='card-exp' style={{ width: '10%' }}>{selectedCard.exp_month > 9 ? selectedCard.exp_month : '0' + selectedCard.exp_month}/{String(selectedCard.exp_year).slice(-2)}</div>
-                                </div>
-
-                            </Modal.Body>
-                            <Modal.Footer className="d-flex justify-content-center" >
-                                <Button variant='danger' onClick={() => deleteCard(selectedCard.id)} disabled={disabledDeleteCard}>
-                                    {isLoading ?
-                                        <FontAwesomeIcon icon={faSpinner} pulse />
-                                        :
-                                        "Supprimer"
-                                    }
-                                </Button>
-                            </Modal.Footer>
-                        </Modal>
-                    }
-                </>
-                :
-                <div className='empty-text'>Aucune méthode de paiement enregistrée</div>
-            }
-            <div onClick={() => setShowCardInput(true)} className='new-card-button-listing'>
-                <FontAwesomeIcon icon={faCircleXmark} style={{ color: 'black', padding: 10, transform: 'rotate(45deg)' }} size='xl' />
-                Ajouter une carte
-            </div>
-            <Modal size='xl' show={showCardInput} onHide={() => setShowCardInput(false)} centered>
-                <Modal.Header closeButton className="px-4">
-                    <Modal.Title className="ms-auto"> Ajouter une carte</Modal.Title>
-                </Modal.Header>
-                <Modal.Body className="d-flex justify-content-center align-items-center" >
-                    <div style={{
-                        boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19)",
-                        padding: 20,
-                        margin: 20,
-                        borderRadius: 5,
-                        width: '50%',
-                    }}>
-
-                        < div style={{ padding: 20 }}>
-                            <div className='card-detail-title'>N° de la carte</div>
-                            <div className='card-element' style={{ marginBottom: '20px' }}>
-                                <div style={{ display: "flex", justifyContent: 'space-between' }}>
-                                    <div style={{ width: '80%' }}>
-                                        <CardNumberElement
-                                            options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
-                                            onChange={handleCardNumberChange}
-                                        />
-                                    </div>
-                                    {isCardNumberFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '10%' }} />}
-                                </div>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
-                                <div>
-                                    <div className='card-detail-title'>Date d'expiration </div>
-                                    <div className='card-element'>
-                                        <div style={{ display: "flex", justifyContent: 'space-between' }}>
-                                            <div style={{ width: '80%' }}>
-                                                <CardExpiryElement onChange={handleCardExpiryChange} />
+                            return (
+                                <React.Fragment key={i}>
+                                    <div className={selectedCard && selectedCard.id === item.id ? 'credit-card-item choosen' : 'credit-card-item'} style={{ width: '100%' }} onClick={() => setSelectedCard(item)}>
+                                        <FontAwesomeIcon icon={getIconByBrand(item.display_brand)} style={{ width: '10%' }} size='xl' className='card-brand' />
+                                        <div className='card-last4' style={{ width: '40%' }}>**** **** **** {item.last4}</div>
+                                        <div className='card-exp' style={{ width: '10%' }}>{item.exp_month > 9 ? item.exp_month : '0' + item.exp_month}/{String(item.exp_year).slice(-2)}</div>
+                                        {item.id === cardDefault ?
+                                            <div style={{ paddingInline: 10, width: '40%' }}>défaut</div>
+                                            :
+                                            <div className="set-default-text" style={{ paddingInline: 10, width: '40%' }} onClick={() => setDefaultCard(item.id)}>
+                                                {isLoading ?
+                                                    <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%' }} size='xl' />
+                                                    :
+                                                    'définir par défaut'
+                                                }
                                             </div>
-                                            {isCardExpiryFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '20%' }} />}
-                                        </div>
+                                        }
+                                        <div className='card-delete' onClick={() => handleDeleteButtonClick(item)}><FontAwesomeIcon icon={faTrash} /></div>
+
                                     </div>
-                                </div>
-                                <div>
-                                    <div className='card-detail-title'>Cryptogramme visuel</div>
-                                    <div className='card-element'>
-                                        <div style={{ display: "flex", justifyContent: 'space-between' }}>
-                                            <div style={{ width: '80%' }}>
-                                                <CardCvcElement options={{ placeholder: '123' }} onChange={handleCardCvcChange} />
-                                            </div>
-                                            {isCardCvcFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '20%' }} />}
 
-                                        </div>
+                                </React.Fragment>
+
+                            )
+                        })}
+                        {selectedCard &&
+                            <Modal size='lg' show={showDeteleCard} onHide={() => setShowDeteleCard(false)} centered>
+                                <Modal.Header closeButton className="px-4">
+                                    <Modal.Title className="ms-auto"> Suppression d'une carte</Modal.Title>
+                                </Modal.Header>
+                                <Modal.Body className="d-flex justify-content-center align-items-center" >
+                                    Voulez-vous retirer cette carte ?
+                                    <div className={'credit-card-item'} style={{ width: '60%', marginLeft: 30 }}>
+                                        <FontAwesomeIcon icon={getIconByBrand(selectedCard.display_brand)} style={{ width: '10%' }} size='xl' className='card-brand' />
+                                        <div className='card-last4' style={{ width: '40%' }}>**** **** **** {selectedCard.last4}</div>
+                                        <div className='card-exp' style={{ width: '10%' }}>{selectedCard.exp_month > 9 ? selectedCard.exp_month : '0' + selectedCard.exp_month}/{String(selectedCard.exp_year).slice(-2)}</div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>
 
-                        {error && <div style={{ color: 'red', marginBlock: 10 }}>{error}</div>}
-                        <div className='check-box-save-card' onClick={() => setSetAsDefaultCard(setAsDefaultCard ? false : true)}>
-                            <Form.Check
-                                type="checkbox"
-                                checked={setAsDefaultCard}
-                                onChange={() => setSetAsDefaultCard(setAsDefaultCard ? false : true)}
-                                style={{ marginRight: 10 }}
-                            />
-
-                            Définir cette carte comme méthode de paiement par défaut
-                        </div>
-                    </div>
-                </Modal.Body>
-                <Modal.Footer className="d-flex justify-content-center" >
-                    <Button variant='success' onClick={() => addCard()} disabled={disabledAddCard}>
-                        {isLoading ?
-                            <FontAwesomeIcon icon={faSpinner} pulse />
-                            :
-                            "Ajouter"
+                                </Modal.Body>
+                                <Modal.Footer className="d-flex justify-content-center" >
+                                    <Button variant='danger' onClick={() => deleteCard(selectedCard.id)} disabled={disabledDeleteCard}>
+                                        {isLoading ?
+                                            <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%' }} size='xl' />
+                                            :
+                                            "Supprimer"
+                                        }
+                                    </Button>
+                                </Modal.Footer>
+                            </Modal>
                         }
-                    </Button>
-                </Modal.Footer>
-            </Modal>
+                    </>
+                    :
+                    <div className='empty-text'>Aucune méthode de paiement enregistrée</div>
+                }
+                <div onClick={() => setShowCardInput(true)} className='new-card-button-listing'>
+                    <FontAwesomeIcon icon={faCircleXmark} style={{ color: 'black', padding: 10, transform: 'rotate(45deg)' }} size='xl' />
+                    Ajouter une carte
+                </div>
+                <Modal size='xl' show={showCardInput} onHide={() => setShowCardInput(false)} centered>
+                    <Modal.Header closeButton className="px-4">
+                        <Modal.Title className="ms-auto"> Ajouter une carte</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body className="d-flex justify-content-center align-items-center" >
+                        <div style={{
+                            boxShadow: "0 2px 4px 0 rgba(0, 0, 0, 0.2), 0 3px 10px 0 rgba(0, 0, 0, 0.19)",
+                            padding: 20,
+                            margin: 20,
+                            borderRadius: 5,
+                            width: '50%',
+                        }}>
 
-        </>
-    )
+                            < div style={{ padding: 20 }}>
+                                <div className='card-detail-title'>N° de la carte</div>
+                                <div className='card-element' style={{ marginBottom: '20px' }}>
+                                    <div style={{ display: "flex", justifyContent: 'space-between' }}>
+                                        <div style={{ width: '80%' }}>
+                                            <CardNumberElement
+                                                options={{ showIcon: true, placeholder: '1234 5678 9012 3456' }}
+                                                onChange={handleCardNumberChange}
+                                            />
+                                        </div>
+                                        {isCardNumberFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '10%' }} />}
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
+                                    <div>
+                                        <div className='card-detail-title'>Date d'expiration </div>
+                                        <div className='card-element'>
+                                            <div style={{ display: "flex", justifyContent: 'space-between' }}>
+                                                <div style={{ width: '80%' }}>
+                                                    <CardExpiryElement onChange={handleCardExpiryChange} />
+                                                </div>
+                                                {isCardExpiryFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '20%' }} />}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div className='card-detail-title'>Cryptogramme visuel</div>
+                                        <div className='card-element'>
+                                            <div style={{ display: "flex", justifyContent: 'space-between' }}>
+                                                <div style={{ width: '80%' }}>
+                                                    <CardCvcElement options={{ placeholder: '123' }} onChange={handleCardCvcChange} />
+                                                </div>
+                                                {isCardCvcFilled && <FontAwesomeIcon icon={faCheckCircle} style={{ color: "#45a049", width: '20%' }} />}
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {error && <div style={{ color: 'red', marginBlock: 10 }}>{error}</div>}
+                            <div className='check-box-save-card' onClick={() => setSetAsDefaultCard(setAsDefaultCard ? false : true)}>
+                                <Form.Check
+                                    type="checkbox"
+                                    checked={setAsDefaultCard}
+                                    onChange={() => setSetAsDefaultCard(setAsDefaultCard ? false : true)}
+                                    style={{ marginRight: 10 }}
+                                />
+
+                                Définir cette carte comme méthode de paiement par défaut
+                            </div>
+                        </div>
+                    </Modal.Body>
+                    <Modal.Footer className="d-flex justify-content-center" >
+                        <Button variant='success' onClick={() => addCard()} disabled={disabledAddCard}>
+                            {isLoading ?
+                                <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%' }} size='xl' />
+                                :
+                                "Ajouter"
+                            }
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+            </>
+        )
+    }
+
 }
 export default ListCard
