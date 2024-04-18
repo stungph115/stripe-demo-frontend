@@ -24,8 +24,8 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
     const [setAsDefaultCard, setSetAsDefaultCard] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingList, setIsLoadingList] = useState(false)
-    console.log('selectedCard: ', selectedCard)
-    console.log(cards)
+    /* console.log('selectedCard: ', selectedCard)
+    console.log(cards) */
     useEffect(() => {
         getPaymentMethods(codeClient)
     }, [codeClient])
@@ -93,7 +93,7 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
                 paymentMethod: newPaymentMethod.paymentMethod.id
             }
             await axios.post(env.URL + 'customer', params).then((res) => {
-                console.log("res axios attach payment: ", res)
+                /* console.log("res axios attach payment: ", res) */
                 if (res.data.statusCode === 200) {
                     if (setAsDefaultCard) {
                         setDefaultCard(newPaymentMethod.paymentMethod.id)
@@ -141,8 +141,8 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
             paymentMethod: paymentMethod,
             custom: codeClient
         }).then((res) => {
-            console.log(res)
-            console.log('setting card as default done')
+            /*  console.log(res)
+             console.log('setting card as default done') */
             getPaymentMethods(codeClient)
             setIsLoading(false)
         }).catch((err) => {
@@ -154,7 +154,7 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
     async function deleteCard(paymentMethod) {
         setIsLoading(true)
         axios.delete(env.URL + 'customer/' + paymentMethod).then((res) => {
-            console.log(res)
+            /* console.log(res) */
             getPaymentMethods(codeClient)
             setIsLoading(false)
             setShowDeteleCard(false)
@@ -170,7 +170,7 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
     if (isLoadingList) {
         return (
             <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%', paddingBlock: 50 }} size='xl' />
-            )
+        )
     } else {
         return (
             <>

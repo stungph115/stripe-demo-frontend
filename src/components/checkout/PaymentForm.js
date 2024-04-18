@@ -71,10 +71,10 @@ const PaymentForm = ({ handlePayment }) => {
         if (!stripe || !elements) {
             return
         }
-        console.log('interval', interval)
+        /* console.log('interval', interval)
         console.log('paymentMonth', paymentMonth)
         console.log('paymentDay', paymentDay)
-        console.log('invervalCount', invervalCount)
+        console.log('invervalCount', invervalCount) */
 
         if (
             (formValue === 1 && (codeArticle === '' || nomSociete === '' || codeClient === '' || montant === ''))
@@ -95,7 +95,7 @@ const PaymentForm = ({ handlePayment }) => {
         var chosenPaymentMethod
         if (!card) {
             //add new card
-            console.log("adding new card")
+            /* console.log("adding new card") */
             try {
                 const newPaymentMethod = await stripe.createPaymentMethod({
                     type: 'card',
@@ -105,9 +105,9 @@ const PaymentForm = ({ handlePayment }) => {
                          email:'',
                      }, */
                 })
-                console.log(newPaymentMethod)
+                /* console.log(newPaymentMethod) */
                 chosenPaymentMethod = newPaymentMethod.paymentMethod.id
-                console.log(chosenPaymentMethod)
+                /* console.log(chosenPaymentMethod) */
                 const params = {
                     codeClient: codeClient,
                     paymentMethod: chosenPaymentMethod
@@ -115,7 +115,7 @@ const PaymentForm = ({ handlePayment }) => {
                 //save card
                 if (saveNewCard) {
                     await axios.post(env.URL + 'customer', params).then((res) => {
-                        console.log("res axios attach payment: ", res)
+                        /* console.log("res axios attach payment: ", res) */
                     }).catch((err) => {
                         console.log("error axios attach payment: ", err)
                         if (err.response.data.message) {
@@ -152,13 +152,13 @@ const PaymentForm = ({ handlePayment }) => {
         }
         //set card as default
         if (setAsDefaultCard || formValue === 2) {
-            console.log('setting card as default')
+            /* console.log('setting card as default') */
             axios.post(env.URL + 'customer/update-default-pm', {
                 paymentMethod: chosenPaymentMethod,
                 custom: codeClient
             }).then((res) => {
-                console.log(res)
-                console.log('setting card as default done')
+                /*  console.log(res)
+                 console.log('setting card as default done') */
             }).catch((err) => {
                 console.log(err)
             })
@@ -166,7 +166,7 @@ const PaymentForm = ({ handlePayment }) => {
         setIsLoading(true)
         //1 time payment 
         if (formValue === 1) {
-            console.log('payment processing')
+            /* console.log('payment processing') */
             const paymentItentData = {
                 nomSociete: nomSociete,
                 codeArticle: codeArticle,
@@ -183,7 +183,7 @@ const PaymentForm = ({ handlePayment }) => {
                 await axios.post(env.URL + 'payments/create', {
                     paymentItentData
                 }).then(async (res) => {
-                    console.log('create payment intent res: ', res)
+                    /* console.log('create payment intent res: ', res) */
                     setPaymentIntent(res.data.paymentData)
                     setLoadingStatus("Verifying payment method...")
                     //confirm payment
@@ -202,12 +202,12 @@ const PaymentForm = ({ handlePayment }) => {
                 interval: interval,
                 interval_count: invervalCount
             }
-            console.log('creating price', priceData)
+            /* console.log('creating price', priceData) */
 
             setLoadingStatus("Creating price...")
 
             await axios.post(env.URL + 'subscription/price', priceData).then(async (res) => {
-                console.log('create price res: ', res)
+                /* console.log('create price res: ', res) */
                 if (res.data.data) {
                     //create subscription
                     const subscriptionData = {
@@ -221,7 +221,7 @@ const PaymentForm = ({ handlePayment }) => {
 
                     setLoadingStatus("Creating subscription...")
                     axios.post(env.URL + 'subscription/create', subscriptionData).then(async (res) => {
-                        console.log('create subscription res: ', res)
+                        /* console.log('create subscription res: ', res) */
                         if (res.data.data.status === 'active') {
                             setSucceeded("Abonnement activé")
                             setIsLoading(false)
@@ -278,7 +278,7 @@ const PaymentForm = ({ handlePayment }) => {
 
     function getPaymentMethod() {
         axios.get(env.URL + 'customer/' + codeClient).then((res) => {
-            console.log(res)
+            /*  console.log(res) */
             setCards(res.data.entity)
             if (res.data.entity.length > 0) {
                 const findCardDefault = res.data.entity.filter(card => card.default === true)
@@ -574,7 +574,7 @@ const PaymentForm = ({ handlePayment }) => {
                     {(!cardDefault || (cardDefault && cardDefault !== card)) && <div className='check-box-save-card' onClick={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}>
                         <Form.Check
                             type="checkbox"
-                            checked={setAsDefaultCard}
+                            checked={formValue === 2 || setAsDefaultCard}
                             onChange={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}
                             style={{ marginRight: 10 }}
                         />

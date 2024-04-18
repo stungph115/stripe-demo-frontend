@@ -73,3 +73,8 @@
 .new-card-button-listing:hover {
     background-color: rgb(255, 173, 107)
 }
+
+.payment-status {
+    display: flex;
+    align-items: center
+}

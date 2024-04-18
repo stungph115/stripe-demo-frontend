@@ -39,7 +39,7 @@ function ListPayment({ codeClient }) {
     async function getPaymentDetails(idStripe) {
         setIsLoading(true)
         axios.get(env.URL + 'payments/stripe/' + idStripe).then((res) => {
-            console.log(res)
+            /*  console.log(res) */
             setPaymentDetail(res.data)
             setIsLoading(false)
         }).catch((err) => {
