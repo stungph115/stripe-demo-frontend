@@ -9,6 +9,7 @@ import { faCheckCircle, faSpinner, faTrash } from '@fortawesome/free-solid-svg-i
 import { getIconByBrand } from '../utils/utils'
 
 function ListCard({ codeClient, selectedCard, setSelectedCard }) {
+
     const stripe = useStripe()
     const elements = useElements()
     const [isCardNumberFilled, setCardNumberFilled] = useState(false)

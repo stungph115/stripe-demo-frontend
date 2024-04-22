@@ -71,10 +71,7 @@ const PaymentForm = ({ handlePayment }) => {
         if (!stripe || !elements) {
             return
         }
-        /* console.log('interval', interval)
-        console.log('paymentMonth', paymentMonth)
-        console.log('paymentDay', paymentDay)
-        console.log('invervalCount', invervalCount) */
+
 
         if (
             (formValue === 1 && (codeArticle === '' || nomSociete === '' || codeClient === '' || montant === ''))
@@ -317,20 +314,7 @@ const PaymentForm = ({ handlePayment }) => {
             setPaymentDay(30)
         }
     }, [paymentMonth])
-    /*  useEffect(() => {
- 
-         if (interval === 'week') {
-             setPaymentDay(null)
-             setPaymentMonth(null)
-         }
-         if (interval === 'month') {
-             setPaymentMonth(null)
-         }
-     }, [interval])
-     console.log('interval', interval)
-     console.log('paymentMonth', paymentMonth)
-     console.log('paymentDay', paymentDay)
-     console.log('invervalCount', invervalCount) */
+
     return (
         <Form onSubmit={handleSubmit}>
 

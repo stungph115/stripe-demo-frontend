@@ -3,15 +3,18 @@ import React, { useEffect, useState } from "react"
 import { env } from "../../env"
 import { Button, Modal, Table } from "react-bootstrap"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
-import { faPen, faSpinner } from "@fortawesome/free-solid-svg-icons"
+import { faSpinner } from "@fortawesome/free-solid-svg-icons"
 import { formatDateTime, getIconByBrand, formatMontant } from "../utils/utils"
 import ListCard from "./ListCard"
 import { useStripe } from '@stripe/react-stripe-js'
 import socket from "../utils/socket"
+import { useParams, useNavigate } from "react-router"
 
 function ListPayment({ codeClient }) {
     const stripe = useStripe()
-
+    const navigate = useNavigate()
+    //id from params
+    const idPayment = useParams().id
     const [paymentDetail, setPaymentDetail] = useState(null)
     const [payments, setPayments] = useState([])
     const [payment, setPayment] = useState(null)
@@ -31,11 +34,22 @@ function ListPayment({ codeClient }) {
         }
     }, [selectedCard])
 
-    const handleRowClickPayment = (index, idStripe) => {
-        setPayment(idStripe)
-        setExpandedRow(expandedRow === index ? null : index)
-        getPaymentDetails(idStripe)
+    const handleRowClickPayment = (idStripe) => {
+        if (idPayment && idPayment === idStripe) {
+            navigate('/list/payment/all')
+        } else {
+            navigate('/list/payment/' + idStripe)
+        }
     }
+    useEffect(() => {
+        if (idPayment === 'all') {
+            setExpandedRow(null)
+        } else {
+            setPayment(idPayment)
+            setExpandedRow(expandedRow === idPayment ? null : idPayment)
+            getPaymentDetails(idPayment)
+        }
+    }, [idPayment])
     async function getPaymentDetails(idStripe) {
         setIsLoading(true)
         axios.get(env.URL + 'payments/stripe/' + idStripe).then((res) => {
@@ -128,9 +142,9 @@ function ListPayment({ codeClient }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {payments.map((payment, index) => (
-                                    <React.Fragment key={index}>
-                                        <tr onClick={() => handleRowClickPayment(index, payment.stripId)} style={{ cursor: 'pointer' }}>
+                                {payments.map((payment) => (
+                                    <React.Fragment key={payment.stripId}>
+                                        <tr onClick={() => handleRowClickPayment(payment.stripId)} style={{ cursor: 'pointer' }}>
                                             <td>{payment.company}</td>
                                             <td>{payment.code_article}</td>
                                             <td>{formatMontant(payment.montant)} €</td>
@@ -138,7 +152,7 @@ function ListPayment({ codeClient }) {
                                             <td>{formatDateTime(payment.dateUpdated)}</td>
                                             <td style={{ color: payment.status === 'paid' ? 'green' : 'red' }}>{payment.status === 'paid' ? 'payé' : 'impayé'}</td>
                                         </tr>
-                                        {expandedRow === index &&
+                                        {expandedRow === payment.stripId &&
                                             <tr>
                                                 <td colSpan={6} style={{ textAlign: 'left', padding: 20 }}>
                                                     {isLoading ?
