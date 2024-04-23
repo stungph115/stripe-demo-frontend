@@ -8,9 +8,12 @@ import { formatDateTime, formatInterval, formatMontant, getFrenchMonthName, getI
 import ListCard from "./ListCard"
 import { useStripe } from "@stripe/react-stripe-js"
 import socket from "../utils/socket"
+import { useParams, useNavigate } from "react-router"
 
 function ListSubscription({ codeClient }) {
     const stripe = useStripe()
+    const navigate = useNavigate()
+    const idSubscription = useParams().id
     const [subscriptions, setSubscriptions] = useState([])
     const [expandedRow, setExpandedRow] = useState(null)
     const [isLoading, setIsLoading] = useState(false)
@@ -35,18 +38,32 @@ function ListSubscription({ codeClient }) {
             console.log(err)
         })
     }
-    const handleRowClickSubscription = (index, idStripe) => {
-        setSubscription(idStripe)
-        setExpandedRow(expandedRow === index ? null : index)
-        getSubscriptionDetail(idStripe)
+
+    const handleRowClickSubscription = (stripId) => {
+        if (idSubscription && idSubscription === stripId) {
+            navigate('/list/subscription/all')
+        } else {
+            navigate('/list/subscription/' + stripId)
+        }
     }
+    useEffect(() => {
+        if (idSubscription === 'all') {
+            setExpandedRow(null)
+        } else {
+            setSubscription(idSubscription)
+            setExpandedRow(expandedRow === idSubscription ? null : idSubscription)
+            getSubscriptionDetail(idSubscription)
+        }
+    }, [idSubscription])
+
     useEffect(() => {
         getSubscriptions(codeClient)
     }, [codeClient])
-    function getSubscriptionDetail(idStripe) {
+
+    async function getSubscriptionDetail(stripId) {
         setIsLoading(true)
-        axios.get(env.URL + 'subscription/stripe/' + idStripe).then((res) => {
-            console.log('res', res)
+        axios.get(env.URL + 'subscription/stripe/' + stripId).then((res) => {
+            /* console.log('res', res) */
             setSubscriptionDetail(res.data)
             if (res.data.pastInvoices) {
                 setPastInvoices(res.data.pastInvoices)
@@ -141,9 +158,9 @@ function ListSubscription({ codeClient }) {
                                 </tr>
                             </thead>
                             <tbody>
-                                {subscriptions.map((subscription, index) => (
-                                    <React.Fragment key={index}>
-                                        <tr onClick={() => handleRowClickSubscription(index, subscription.stripId)} style={{ cursor: 'pointer' }}>
+                                {subscriptions.map((subscription) => (
+                                    <React.Fragment key={subscription.stripId}>
+                                        <tr onClick={() => handleRowClickSubscription(subscription.stripId)} style={{ cursor: 'pointer' }}>
                                             <td>{subscription.code_contrat}</td>
                                             <td>{formatInterval(subscription.interval)}</td>
                                             <td>{subscription.interval_count}</td>
@@ -160,7 +177,7 @@ function ListSubscription({ codeClient }) {
                                                 < td style={{ color: 'rgb(255 162 0)', fontWeight: 500 }}>En attente</td>
                                             }
                                         </tr>
-                                        {expandedRow === index &&
+                                        {expandedRow === subscription.stripId &&
                                             <tr>
                                                 <td colSpan={7} style={{ textAlign: 'left', padding: 20 }}>
                                                     {isLoading ?
@@ -183,7 +200,7 @@ function ListSubscription({ codeClient }) {
                                                                 <div style={{ display: 'flex' }}>
                                                                     <div><strong>Cycle de Facturation:</strong></div>
                                                                     <div style={{ marginLeft: 5 }}>
-                                                                        {new Date(subscriptionDetail.billing_cycle_anchor * 1000).toLocaleString()}
+                                                                        {formatDateTime(subscriptionDetail.billing_cycle_anchor * 1000)}
                                                                     </div>
                                                                 </div>
                                                             }

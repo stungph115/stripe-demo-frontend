@@ -114,7 +114,7 @@ const PaymentForm = ({ handlePayment }) => {
                     await axios.post(env.URL + 'customer', params).then((res) => {
                         /* console.log("res axios attach payment: ", res) */
                     }).catch((err) => {
-                        console.log("error axios attach payment: ", err)
+                        /* console.log("error axios attach payment: ", err) */
                         if (err.response.data.message) {
                             if (err.response.data.message === 'STRIPE_ERROR_card_declined') {
                                 setError("La carte a été refusée")
@@ -150,7 +150,7 @@ const PaymentForm = ({ handlePayment }) => {
         //set card as default
         if (setAsDefaultCard || formValue === 2) {
             /* console.log('setting card as default') */
-            axios.post(env.URL + 'customer/update-default-pm', {
+            await axios.post(env.URL + 'customer/update-default-pm', {
                 paymentMethod: chosenPaymentMethod,
                 custom: codeClient
             }).then((res) => {
@@ -229,7 +229,7 @@ const PaymentForm = ({ handlePayment }) => {
 
                     }).catch((error) => {
                         console.log(error)
-                        setError(error.response.data.message)
+                        setError("Abonnement incomplete: " + error.response.data.message)
                         setIsLoading(false)
                     })
                 }

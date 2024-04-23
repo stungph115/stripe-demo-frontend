@@ -1,9 +1,10 @@
 import { faCcAmex, faCcMastercard, faCcVisa } from "@fortawesome/free-brands-svg-icons"
 import { faCreditCard } from "@fortawesome/free-solid-svg-icons"
+import moment from 'moment'
 
 export const formatDateTime = (dateTimeString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' };
-    return new Date(dateTimeString).toLocaleString('fr-FR', options)
+    const formattedDateTime = moment(dateTimeString).locale('fr').format('DD MMM YYYY [à] HH[h]mm')
+    return formattedDateTime
 }
 
 export const formatMontant = (montant) => {

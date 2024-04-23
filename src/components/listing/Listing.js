@@ -5,29 +5,17 @@ import ListCard from './ListCard'
 import ListPayment from './ListPayment'
 import ListSubscription from './ListSubscription'
 import { Route, Routes } from 'react-router-dom'
-import { useNavigate } from 'react-router'
+import { useLocation, useNavigate } from 'react-router'
 function Listing() {
+
+    const currentRoute = useLocation().pathname
+    /* console.log("currentRoute: ", currentRoute) */
     const codeClientdefault = 'ABCD1234'
     const [codeClient, setCodeClient] = useState(codeClientdefault)
-    const [subRoute, setSubRoute] = useState(1)
+    /* const [subRoute, setSubRoute] = useState(1) */
     const [selectedCard, setSelectedCard] = useState(null)
     const navigate = useNavigate()
-    function handleRouting(route) {
-        setSubRoute(route)
-        switch (route) {
-            case 2:
-                navigate('./payment/all')
-                break
-            case 3:
-                navigate('./subscription/all')
-                break
-            case 1:
-                navigate('./')
-                break
-            default:
-                break
-        }
-    }
+
     return (
         <div className='listing'>
 
@@ -40,9 +28,9 @@ function Listing() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-                <div onClick={() => handleRouting(1)} className={subRoute === 1 ? 'sub-route choosen' : 'sub-route'}>Méthodes de paiement</div>
-                <div onClick={() => handleRouting(2)} className={subRoute === 2 ? 'sub-route choosen' : 'sub-route'}>Mes paiements</div>
-                <div onClick={() => handleRouting(3)} className={subRoute === 3 ? 'sub-route choosen' : 'sub-route'}>Mes abonnements</div>
+                <div onClick={() => navigate('./')} className={(currentRoute === '/list' || currentRoute === '/list/') ? 'sub-route choosen' : 'sub-route'}>Méthodes de paiement</div>
+                <div onClick={() => navigate('./payment/all')} className={currentRoute.startsWith('/list/payment') ? 'sub-route choosen' : 'sub-route'}>Mes paiements</div>
+                <div onClick={() => navigate('./subscription/all')} className={currentRoute.startsWith('/list/subscription') ? 'sub-route choosen' : 'sub-route'}>Mes abonnements</div>
             </div>
             <Routes>
                 <Route path="/" element={<ListCard codeClient={codeClient} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />} />
