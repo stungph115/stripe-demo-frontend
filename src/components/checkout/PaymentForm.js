@@ -256,6 +256,8 @@ const PaymentForm = ({ handlePayment }) => {
                 if (res.error) {
                     if (res.error.code === 'incorrect_cvc') {
                         setError("Code cryptogramme visuel est incorrect.")
+                        //code générale information incorrects
+
                     }
                     if (res.error.code === 'card_declined') {
                         setError("Paiement refusé. Réessayer ou choisir une autre carte.")
