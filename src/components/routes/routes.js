@@ -8,7 +8,7 @@ export default function AppRoutes() {
         <Routes>
             <Route path='/' element={<PaymentForm />} />
             <Route path='/list/*' element={<Listing />} />
-            <Route path='/admin' element={<Admin />} />
+            <Route path='/admin/*' element={<Admin />} />
         </Routes>
     )
 }

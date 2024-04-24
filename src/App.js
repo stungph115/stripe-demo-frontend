@@ -16,7 +16,7 @@ function App() {
       <div style={{ display: 'flex', justifyContent: 'center' }}>
         <div onClick={() => navigate('/')} className={currentRoute === '/' ? 'route choosen' : 'route'} style={{ paddingInline: 20 }}>Check out</div>
         <div onClick={() => navigate('/list')} className={currentRoute.startsWith('/list') ? 'route choosen' : 'route'} style={{ paddingInline: 20 }}>Listing</div>
-        <div onClick={() => navigate('/admin')} className={currentRoute.startsWith('/admin') ? 'route choosen' : 'route'} style={{ paddingInline: 20 }}>Admin</div>
+        <div onClick={() => navigate('/admin/payment/all')} className={currentRoute.startsWith('/admin') ? 'route choosen' : 'route'} style={{ paddingInline: 20 }}>Admin</div>
       </div>
 
       <Elements stripe={stripePromise}>
