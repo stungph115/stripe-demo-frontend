@@ -26,7 +26,7 @@ function PaymentAdmin() {
     async function getPayments() {
         setIsLoadingList(true)
 
-        axios.get(env.URL + 'payments').then((res) => {
+        axios.get(env.URL + 'commande').then((res) => {
             setPayments(res.data)
             setIsLoadingList(false)
         }).catch((error) => {
@@ -60,7 +60,7 @@ function PaymentAdmin() {
 
     function getPaymentDetail(idStripe) {
         setIsLoading(true)
-        axios.get(env.URL + 'payments/stripe/' + idStripe).then((res) => {
+        axios.get(env.URL + 'commande/stripe/' + idStripe).then((res) => {
             /* console.log(res) */
             if (res.data) {
                 setPaymentDetail(res.data)

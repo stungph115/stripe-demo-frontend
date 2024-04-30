@@ -19,7 +19,7 @@ export const formatInterval = (interval) => {
         case 'month':
             return 'mois'
         case 'year':
-            return 'année'
+            return 'an'
         default:
             return null
     }
@@ -42,6 +42,6 @@ export function getFrenchMonthName(monthNumber) {
     const months = [
         'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
         'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
-    ];
+    ]
     return months[monthNumber - 1]
 }

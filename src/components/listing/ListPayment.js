@@ -52,7 +52,7 @@ function ListPayment({ codeClient }) {
     }, [idPayment])
     async function getPaymentDetails(idStripe) {
         setIsLoading(true)
-        axios.get(env.URL + 'payments/stripe/' + idStripe).then((res) => {
+        axios.get(env.URL + 'commande/stripe/' + idStripe).then((res) => {
             /*  console.log(res) */
             setPaymentDetail(res.data)
             setIsLoading(false)
@@ -63,7 +63,7 @@ function ListPayment({ codeClient }) {
     }
     async function getPayments(codeClient) {
         setIsLoadingList(true)
-        axios.get(env.URL + 'payments/' + codeClient).then((res) => {
+        axios.get(env.URL + 'commande/' + codeClient).then((res) => {
             if (res.data) {
                 setPayments(res.data)
             } else {

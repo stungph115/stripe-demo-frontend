@@ -7,19 +7,29 @@ import { faArrowsRotate, faCheckCircle, faCreditCard, faSpinner } from '@fortawe
 import { Button, Form, ToggleButton, ToggleButtonGroup } from 'react-bootstrap'
 import { faCcVisa, faCcAmex, faCcMastercard } from '@fortawesome/free-brands-svg-icons'
 import { env } from '../../env'
+import { clients, articles, subscriptions, coupons, companies } from '../../Dummy'
+import OrderForm from './CommandeForm'
+import { formatMontant } from '../utils/utils'
+import SubscriptionForm from './SubscriptionForm'
 
-const PaymentForm = ({ handlePayment }) => {
-    const codeClientdefault = 'ABCD1234'
+const PaymentForm = () => {
     const stripe = useStripe()
     const elements = useElements()
-    const [nomSociete, setNomsociete] = useState('HTL')
-    const [codeArticle, setCodeArticle] = useState('ABC123')
-    const [montant, setMontant] = useState('10.10')
-    const [codeClient, setCodeClient] = useState(codeClientdefault)
+    //choose client
+    const [client, setClient] = useState(clients[0])
+    //for order form
+    const [nomSociete, setNomsociete] = useState(companies[0])
+
+    const [montant, setMontant] = useState(0)
+
+    //loading and return
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState(null)
     const [succeeded, setSucceeded] = useState(null)
     const [loadingStatus, setLoadingStatus] = useState(null)
+    //switching forms
+    const [formValue, setFormValue] = useState(1)
+    //for cards
     const [card, setCard] = useState(null)
     const [cards, setCards] = useState([])
     const [showCardInput, setShowCardInput] = useState(false)
@@ -29,28 +39,17 @@ const PaymentForm = ({ handlePayment }) => {
     const [isCardCvcFilled, setCardCvcFilled] = useState(false)
     const [saveNewCard, setSaveNewCard] = useState(true)
     const [setAsDefaultCard, setSetASDefaultCartd] = useState(false)
-    const [paymentIntent, setPaymentIntent] = useState(null)
-    const [formValue, setFormValue] = useState(1)
-    const [codeContrat, setCodecontrat] = useState('ABCD1234')
-    const [interval, setInterval] = useState('week')
-    const [paymentDay, setPaymentDay] = useState('1')
-    const [paymentMonth, setPaymentMonth] = useState('1')
-    var daysInMonth = Array.from({ length: 31 }, (_, index) => index + 1)
-    const [dayOptions, setDayOptions] = useState(daysInMonth)
     const [cardDefault, setCardDefault] = useState(null)
+
+    //saved payment
+    const [paymentIntent, setPaymentIntent] = useState(null)
+
+    //for subscriptions
+    const [paymentDay, setPaymentDay] = useState()
+    const [paymentMonth, setPaymentMonth] = useState()
+    const [interval, setInterval] = useState()
     const [invervalCount, setIntervalCount] = useState(1)
 
-    useEffect(() => {
-        var lastDayofMonth
-        if (paymentMonth === '2') {
-            lastDayofMonth = 28
-        } else if (['4', '6', '9', '11'].includes(paymentMonth)) {
-            lastDayofMonth = 30
-        } else {
-            lastDayofMonth = 31
-        }
-        setDayOptions(Array.from({ length: lastDayofMonth }, (_, index) => index + 1))
-    }, [paymentMonth])
 
     const handleCardNumberChange = (event) => {
         setCardNumberFilled(event.complete)
@@ -73,14 +72,14 @@ const PaymentForm = ({ handlePayment }) => {
         }
 
 
-        if (
-            (formValue === 1 && (codeArticle === '' || nomSociete === '' || codeClient === '' || montant === ''))
-            ||
-            (formValue === 2 && (codeContrat === '' || !interval || (interval === 'year' && (!paymentMonth || !paymentDay)) || (interval === 'month' && !paymentDay) || montant === ''))
-        ) {
-            setError('Veuillez saisir tous les informations')
-            return
-        }
+        /*  if (
+             (formValue === 1 && (codeArticle === '' || nomSociete === '' || client.code_client === '' || montant === ''))
+             ||
+             (formValue === 2 && (codeContrat === '' || !interval || (interval === 'year' && (!paymentMonth || !paymentDay)) || (interval === 'month' && !paymentDay) || montant === ''))
+         ) {
+             setError('Veuillez saisir tous les informations')
+             return
+         } */
 
         if (!card && (!isCardNumberFilled || !isCardExpiryFilled || !isCardCvcFilled)) {
             setError("Veuillez choisir une methode de paiement ou bien saisir la nouvelle carte.")
@@ -106,7 +105,7 @@ const PaymentForm = ({ handlePayment }) => {
                 chosenPaymentMethod = newPaymentMethod.paymentMethod.id
                 /* console.log(chosenPaymentMethod) */
                 const params = {
-                    codeClient: codeClient,
+                    codeClient: client.code_client,
                     paymentMethod: chosenPaymentMethod
                 }
                 //save card
@@ -152,7 +151,7 @@ const PaymentForm = ({ handlePayment }) => {
             /* console.log('setting card as default') */
             await axios.post(env.URL + 'customer/update-default-pm', {
                 paymentMethod: chosenPaymentMethod,
-                custom: codeClient
+                customer: client.code_client
             }).then((res) => {
                 /*  console.log(res)
                  console.log('setting card as default done') */
@@ -166,9 +165,9 @@ const PaymentForm = ({ handlePayment }) => {
             /* console.log('payment processing') */
             const paymentItentData = {
                 nomSociete: nomSociete,
-                codeArticle: codeArticle,
+                /* codeArticle: codeArticle, */
                 montant: montant * 100,
-                codeClient: codeClient,
+                codeClient: client.code_client,
             }
             //recheck payment if already created
             if (paymentIntent) {
@@ -177,7 +176,7 @@ const PaymentForm = ({ handlePayment }) => {
             } else {
                 setLoadingStatus("Creating payment...")
                 //create payment
-                await axios.post(env.URL + 'payments/create', {
+                await axios.post(env.URL + 'commande/create', {
                     paymentItentData
                 }).then(async (res) => {
                     /* console.log('create payment intent res: ', res) */
@@ -208,8 +207,7 @@ const PaymentForm = ({ handlePayment }) => {
                 if (res.data.data) {
                     //create subscription
                     const subscriptionData = {
-                        codeClient: codeClient,
-                        codeContrat: codeContrat,
+                        codeClient: client.code_client,
                         price: res.data.data,
                         payment_method: chosenPaymentMethod,
                         paymentDate: interval === 'week' ? null : parseInt(paymentDay),
@@ -270,13 +268,13 @@ const PaymentForm = ({ handlePayment }) => {
             })
     }
     useEffect(() => {
-        if (codeClient !== '') {
+        if (client !== '') {
             setGetCustomerDisabled(false)
         }
-    }, [codeClient])
+    }, [client])
 
     function getPaymentMethod() {
-        axios.get(env.URL + 'customer/' + codeClient).then((res) => {
+        axios.get(env.URL + 'customer/' + client.code_client).then((res) => {
             /*  console.log(res) */
             setCards(res.data.entity)
             if (res.data.entity.length > 0) {
@@ -307,15 +305,8 @@ const PaymentForm = ({ handlePayment }) => {
             setCard(defaultCard.id)
         }
     }, [cards])
-    //day month validator
-    useEffect(() => {
-        if (paymentMonth == 2 && paymentDay > 28) {
-            setPaymentDay(28)
-        }
-        if (['4', '6', '9', '11'].includes(paymentMonth) && paymentDay == 31) {
-            setPaymentDay(30)
-        }
-    }, [paymentMonth])
+
+    //caculate total amount 
 
     return (
         <Form onSubmit={handleSubmit}>
@@ -332,8 +323,14 @@ const PaymentForm = ({ handlePayment }) => {
                         <div style={{ width: '100%', paddingInline: 50, }}>
                             <div style={{ display: 'flex', justifyContent: '', alignItems: 'center' }}>
                                 <label style={{ width: '100%' }}>
-                                    Code client:
-                                    <Form.Control type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
+                                    Select client:
+                                    <Form.Select name="client" onChange={(e) => { setClient(e.target.value) }} value={client}>
+                                        {clients.map((client, i) => {
+                                            return (
+                                                <option value={client} key={i}>{client.name}</option>
+                                            )
+                                        })}
+                                    </Form.Select>
                                 </label>
 
                                 <Button variant="success" onClick={() => getPaymentMethod()} disabled={getCustomerDisabled} style={{ height: 'fit-content', display: 'flex', marginTop: '15px' }}>
@@ -342,120 +339,39 @@ const PaymentForm = ({ handlePayment }) => {
                             </div>
                             <ToggleButtonGroup type="radio" value={formValue} name="formToggle" onChange={(value) => setFormValue(value)} style={{ marginTop: 20 }}>
                                 <ToggleButton id="tbg-btn-1" variant="light" value={1}>
-                                    <span style={{ color: "#2C3E50", fontWeight: 600, fontSize: formValue === 1 ? 18 : 14 }}>Paiement une fois</span>
+                                    <span style={{ color: "#2C3E50", fontWeight: 600, fontSize: formValue === 1 ? 18 : 14 }}>Acheter des articles</span>
                                 </ToggleButton>
                                 <ToggleButton id="tbg-btn-2" variant="light" value={2}>
-                                    <span style={{ color: "#2C3E50", fontWeight: 600, fontSize: formValue === 1 ? 14 : 18 }}>Abonnement</span>
+                                    <span style={{ color: "#2C3E50", fontWeight: 600, fontSize: formValue === 1 ? 14 : 18 }}>Souscription</span>
                                 </ToggleButton>
                             </ToggleButtonGroup>
-
-                            {formValue === 1 &&
-                                <>
-                                    <div>
-                                        <label style={{ width: '100%' }}>
-                                            Nom de la société:
-                                            <Form.Control type="text" name="nomSociete" value={nomSociete} onChange={(e) => { setNomsociete(e.target.value) }} />
-                                        </label >
-                                    </div>
-                                    <div>
-                                        <label style={{ width: '100%' }}>
-                                            Code d'article:
-                                            <Form.Control type="text" name="codeArticle" value={codeArticle} onChange={(e) => { setCodeArticle(e.target.value) }} />
-                                        </label>
-                                    </div>
-                                </>
-                            }
-                            {formValue === 2 &&
-                                <>
-                                    <div>
-                                        <label style={{ width: '100%' }}>
-                                            Code contrat:
-                                            <Form.Control type="text" name="codeContrat" value={codeContrat} onChange={(e) => { setCodecontrat(e.target.value) }} />
-                                        </label>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <label style={{ width: interval === 'week' ? '45%' : (interval === 'month' ? '30%' : '20%') }}>
-                                            Interval:
-                                            <Form.Select name="interval" onChange={(e) => { setInterval(e.target.value) }} value={interval}>
-                                                <option value={'week'}>Hebdomadaire</option>
-                                                <option value={'month'}>Mensuel</option>
-                                                <option value={'year'}>Annuel</option>
-                                            </Form.Select>
-                                        </label>
-                                        <label style={{ width: interval === 'week' ? '45%' : (interval === 'month' ? '30%' : '20%') }}>
-                                            Interval count:
-                                            <Form.Control type="number" step='1' name="intervalCount" value={invervalCount} onChange={(e) => { setIntervalCount(e.target.value) }} />
-                                        </label>
-                                        {interval && interval !== 'week' &&
-                                            <>
-                                                {interval === 'year' &&
-                                                    <label style={{ width: '20%' }}>
-                                                        Mois :
-                                                        <Form.Select value={paymentMonth} name="paymentMonth" onChange={(e) => { setPaymentMonth(e.target.value) }} >
-                                                            <option value={1}>Janvier</option>
-                                                            <option value={2}>Février</option>
-                                                            <option value={3}>Mars</option>
-                                                            <option value={4}>Avril</option>
-                                                            <option value={5}>Mai</option>
-                                                            <option value={6}>Juin</option>
-                                                            <option value={7}>Juillet</option>
-                                                            <option value={8}>Août</option>
-                                                            <option value={9}>Septembre</option>
-                                                            <option value={10}>Octobre</option>
-                                                            <option value={11}>Novembre</option>
-                                                            <option value={12}>Décembre</option>
-                                                        </Form.Select>
-                                                    </label>
-                                                }
-                                                <label style={{ width: interval === 'month' ? '30%' : '20%' }}>
-                                                    Jour :
-                                                    <Form.Select name="paymentDay" value={paymentDay} onChange={(e) => { setPaymentDay(e.target.value) }}>
-                                                        {dayOptions.map((day, i) => {
-                                                            return (
-                                                                <option value={day} key={i}>{day}</option>
-                                                            )
-                                                        })}
-                                                    </Form.Select>
-                                                </label>
-                                            </>
-                                        }
-                                    </div>
-                                    <div className='notice'>
-                                        <>* Abonnement
-                                            {invervalCount && invervalCount > 1 &&
-                                                <> tous les {invervalCount} </>
-                                            }
-                                            {interval === 'week' && ((invervalCount && invervalCount > 1) ?
-                                                <> semaines </> : < > hebdomadaire </>)
-                                            }
-                                            {interval === 'month' && ((invervalCount && invervalCount > 1) ?
-                                                <> mois </> : <> mensuel </>)
-                                            }
-                                            {interval === 'year' && ((invervalCount && invervalCount > 1) ?
-                                                <> années </> : <> annuel </>)
-                                            }
-                                            de {montant > 0 && montant + ' €'}
-                                        </>
-                                        <br />
-                                        {interval !== 'week' &&
-                                            <>
-                                                ** Prélèvement définie est
-                                                {interval === 'month' ?
-                                                    <> au {paymentDay > 1 ? paymentDay + 'ème' : '1er'} jour du mois {paymentDay == 31 && "(ou le dernier jour du mois)"}  {paymentDay == 30 && "(ou le dernier jour de février)"}</>
-                                                    :
-                                                    <> le {paymentDay}/{paymentMonth} de chaque année</>
-                                                }
-
-                                            </>
-                                        }
-                                    </div>
-                                </>
-                            }
-
-                            <label style={{ width: '100%' }}>
-                                Montant (en €):
-                                <Form.Control type="number" step="0.01" name="montant" value={montant} onChange={(e) => { setMontant(e.target.value) }} />
-                            </label>
+                            <div style={{ paddingBlock: 10 }}>
+                                {formValue === 1 &&
+                                    <OrderForm
+                                        articles={articles}
+                                        companies={companies}
+                                        nomSociete={nomSociete}
+                                        setNomsociete={setNomsociete}
+                                        montant={montant}
+                                        setMontant={setMontant}
+                                    />
+                                }
+                                {formValue === 2 &&
+                                    <SubscriptionForm
+                                        subscriptions={subscriptions}
+                                        paymentDay={paymentDay}
+                                        setPaymentDay={setPaymentDay}
+                                        paymentMonth={paymentMonth}
+                                        setPaymentMonth={setPaymentMonth}
+                                        interval={interval}
+                                        setInterval={setInterval}
+                                        invervalCount={invervalCount}
+                                        setIntervalCount={setIntervalCount}
+                                        montant={montant}
+                                        setMontant={setMontant}
+                                    />
+                                }
+                            </div>
 
                             {/* CB */}
                             <div>
@@ -564,33 +480,15 @@ const PaymentForm = ({ handlePayment }) => {
                             onChange={() => setSetASDefaultCartd(setAsDefaultCard ? false : true)}
                             style={{ marginRight: 10 }}
                         />
-
                         Définir cette carte comme méthode de paiement par défaut
                     </div>
                     }
                     <Button type="submit" variant="success" style={{ cursor: 'pointer', minWidth: '150px', height: 40, margin: 0 }}  >
                         {formValue === 1 ?
-                            <>Payer {montant > 0 && montant + ' €'}</>
-
+                            <>Payer </>
                             :
-                            <>Abonner
-                                {invervalCount && invervalCount > 1 &&
-                                    <> tous les {invervalCount} </>
-                                }
-                                {interval === 'week' && ((invervalCount && invervalCount > 1) ?
-                                    <> semaines </> : < > hebdomadaire </>)
-                                }
-                                {interval === 'month' && ((invervalCount && invervalCount > 1) ?
-                                    <> mois </> : <> mensuel </>)
-                                }
-                                {interval === 'year' && ((invervalCount && invervalCount > 1) ?
-                                    <> années </> : <> annuel </>)
-                                }
-                                de {montant > 0 && montant + ' €'}
-                            </>
-
+                            <>Abonner</>
                         }
-
                     </Button>
                 </>)
             }

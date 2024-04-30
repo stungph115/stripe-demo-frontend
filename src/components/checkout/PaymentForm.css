@@ -153,3 +153,15 @@ button:hover {
     text-align: left;
     margin-left: 10px;
 }
+
+.article {
+    cursor: pointer;
+}
+
+.article:hover {
+    border: #007185 2px solid
+}
+
+.article.chosen {
+    border: #007185 2px solid
+}
