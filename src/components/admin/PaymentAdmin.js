@@ -112,7 +112,7 @@ function PaymentAdmin() {
                                                     <td>{payment.id}</td>
                                                     <td>{payment.stripId}</td>
                                                     <td>{payment.code_article}</td>
-                                                    <td>{payment.code_client}</td>
+                                                    <td>{payment.codeClient}</td>
                                                     <td>{payment.company}</td>
                                                     <td>{payment.ref_transaction}</td>
                                                     <td>{payment.montant}</td>

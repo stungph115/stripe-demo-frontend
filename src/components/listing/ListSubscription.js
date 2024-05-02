@@ -10,7 +10,7 @@ import { useStripe } from "@stripe/react-stripe-js"
 import socket from "../utils/socket"
 import { useParams, useNavigate } from "react-router"
 
-function ListSubscription({ codeClient }) {
+function ListSubscription({ client }) {
     const stripe = useStripe()
     const navigate = useNavigate()
     const idSubscription = useParams().id
@@ -57,8 +57,8 @@ function ListSubscription({ codeClient }) {
     }, [idSubscription])
 
     useEffect(() => {
-        getSubscriptions(codeClient)
-    }, [codeClient])
+        getSubscriptions(client.codeClient)
+    }, [client])
 
     async function getSubscriptionDetail(stripId) {
         setIsLoading(true)
@@ -124,7 +124,7 @@ function ListSubscription({ codeClient }) {
     }
     useEffect(() => {
         socket.on('SUBSCRIPTION_UPDATED', () => {
-            getSubscriptions(codeClient)
+            getSubscriptions(client.codeClient)
         })
         return () => {
             socket.off('SUBSCRIPTION_UPDATED')
@@ -321,7 +321,7 @@ function ListSubscription({ codeClient }) {
                             </div>
                             :
                             <div style={{ width: '70%' }}>
-                                <ListCard codeClient={codeClient} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />
+                                <ListCard client={client} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />
                                 {error && <div style={{ color: 'red', marginBlock: 10 }}>{error}</div>}
                             </div>
                         }

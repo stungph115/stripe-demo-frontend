@@ -1,8 +1,8 @@
 import { Form, Card } from 'react-bootstrap';
 import { formatMontant } from '../utils/utils';
 import { useEffect, useState } from 'react';
-
-function OrderForm({ articles, companies, nomSociete, setNomsociete, montant, setMontant }) {
+import { articles, companies } from '../../Dummy';
+function OrderForm({ nomSociete, setNomsociete, montant, setMontant }) {
     const [articleChosen, setArticleChosen] = useState([])
 
     function chooseArticle(article) {
@@ -34,7 +34,7 @@ function OrderForm({ articles, companies, nomSociete, setNomsociete, montant, se
                     </Form.Select>
                 </label>
             </div>
-            <div>
+            <div style={{ marginTop: 10 }}>
                 <label style={{ width: '100%' }}>
                     Sélectionner des articles:
                 </label>
@@ -51,6 +51,7 @@ function OrderForm({ articles, companies, nomSociete, setNomsociete, montant, se
                                         <Form.Check
                                             type="checkbox"
                                             checked={articleChosen.includes(article)}
+                                            onChange={() => chooseArticle(article)}
                                         />
                                     </div>
                                 </Card.Body>

@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react"
 import { Card, Form } from "react-bootstrap"
 import { formatInterval, formatMontant } from "../utils/utils"
+import { subscriptions } from "../../Dummy"
 
-function SubscriptionForm({ montant, setMontant, subscriptions, paymentDay, setPaymentDay, paymentMonth, setPaymentMonth, interval, setInterval, invervalCount, setIntervalCount }) {
+function SubscriptionForm({ chosenSubscription, setChosenSubscription, paymentDay, setPaymentDay, paymentMonth, setPaymentMonth }) {
 
-
-    const [chosenSubscription, setChosenSubscription] = useState(null)
     const [dayOptions, setDayOptions] = useState(daysInMonth)
     var daysInMonth = Array.from({ length: 31 }, (_, index) => index + 1)
     //day-month validator
@@ -48,13 +47,11 @@ function SubscriptionForm({ montant, setMontant, subscriptions, paymentDay, setP
                         <li key={i} onClick={() => chooseSubscription(sub)} >
                             <Card style={{ marginBottom: '10px' }} className={chosenSubscription && chosenSubscription === sub ? 'article chosen' : 'article'}>
                                 <Card.Body >
-                                    <div >
-                                        <Card.Title>{sub.name}</Card.Title>
-                                        <Card.Text>{sub.description}</Card.Text>
-                                        <Card.Text style={{ display: 'flex', alignItems: 'end', justifyContent: 'center' }}>
-                                            <div style={{ fontSize: 30, marginRight: 5 }}> <strong> {formatMontant(sub.price)} € </strong></div>
-                                            <div> / {sub.recurring.interval_count > 1 && sub.recurring.interval_count} {formatInterval(sub.recurring.interval)}{sub.recurring.interval_count > 1 && sub.recurring.interval !== 'month' && 's'}</div>
-                                        </Card.Text>
+                                    <Card.Title>{sub.name}</Card.Title>
+                                    <Card.Text>{sub.description}</Card.Text>
+                                    <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'center' }}>
+                                        <div style={{ fontSize: 30, marginRight: 5 }}> <strong> {formatMontant(sub.price)} € </strong></div>
+                                        <div> / {sub.recurring.interval_count > 1 && sub.recurring.interval_count} {formatInterval(sub.recurring.interval)}{sub.recurring.interval_count > 1 && sub.recurring.interval !== 'month' && 's'}</div>
                                     </div>
                                 </Card.Body>
                             </Card>
@@ -106,7 +103,7 @@ function SubscriptionForm({ montant, setMontant, subscriptions, paymentDay, setP
                     <>
                         ** Prélèvement définie est
                         {chosenSubscription.recurring.interval === 'month' ?
-                            <> au {paymentDay > 1 ? paymentDay + 'ème' : '1er'} jour du mois {paymentDay == 31 && "(ou le dernier jour du mois)"}  {paymentDay == 30 && "(ou le dernier jour de février)"}</>
+                            <> au <strong>{paymentDay > 1 ? paymentDay + 'ème' : '1er'}</strong> jour du mois {paymentDay == 31 && "(ou le dernier jour du mois)"}  {paymentDay == 30 && "(ou le dernier jour de février)"}</>
                             :
                             <> le <strong>{paymentDay}/{paymentMonth}</strong> de chaque année</>
                         }

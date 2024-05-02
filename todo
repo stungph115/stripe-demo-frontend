@@ -1,0 +1,11 @@
+- apply coupon
+- remake backend
+- payment case Attaching this card to a Customer object will succeed, but attempts to charge the customer will fail.
+- save subscription in case error to fix it (in checkout form)
+- admin can change card to fix error payments and subs
+- fix moment 
+- add metadata to show needed infomations
+- popup before set card to default
+- subscription: check if user can use a card which is not default card
+- check customer info when init
+- backend: create DTO for all params

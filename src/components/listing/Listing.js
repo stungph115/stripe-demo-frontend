@@ -6,12 +6,12 @@ import ListPayment from './ListPayment'
 import ListSubscription from './ListSubscription'
 import { Route, Routes } from 'react-router-dom'
 import { useLocation, useNavigate } from 'react-router'
+import { clients } from '../../Dummy'
 function Listing() {
-
+    //choose client
+    const [client, setClient] = useState(clients[0])
     const currentRoute = useLocation().pathname
     /* console.log("currentRoute: ", currentRoute) */
-    const codeClientdefault = 'ABCD1234'
-    const [codeClient, setCodeClient] = useState(codeClientdefault)
     /* const [subRoute, setSubRoute] = useState(1) */
     const [selectedCard, setSelectedCard] = useState(null)
     const navigate = useNavigate()
@@ -21,8 +21,14 @@ function Listing() {
 
             <div className='client-input' style={{ display: 'flex', justifyContent: 'center' }}>
                 <label style={{ width: 'fit-content' }}>
-                    Code client:
-                    <Form.Control type="text" name="codeClient" value={codeClient} onChange={(e) => { setCodeClient(e.target.value) }} />
+                    Select client:
+                    <Form.Select name="client" onChange={(e) => { setClient(e.target.value) }} value={client}>
+                        {clients.map((client, i) => {
+                            return (
+                                <option value={client} key={i}>{client.name}</option>
+                            )
+                        })}
+                    </Form.Select>
                 </label>
 
             </div>
@@ -33,9 +39,9 @@ function Listing() {
                 <div onClick={() => navigate('./subscription/all')} className={currentRoute.startsWith('/list/subscription') ? 'sub-route choosen' : 'sub-route'}>Mes abonnements</div>
             </div>
             <Routes>
-                <Route path="/" element={<ListCard codeClient={codeClient} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />} />
-                <Route path="/payment/:id" element={<ListPayment codeClient={codeClient} />} />
-                <Route path="/subscription/:id" element={<ListSubscription codeClient={codeClient} />} />
+                <Route path="/" element={<ListCard client={client} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />} />
+                <Route path="/payment/:id" element={<ListPayment client={client} />} />
+                <Route path="/subscription/:id" element={<ListSubscription client={client} />} />
             </Routes>
         </div >
     )

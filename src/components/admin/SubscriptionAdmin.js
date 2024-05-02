@@ -112,7 +112,7 @@ function SubscriptionAdmin() {
                                                     <td>{subscription.id}</td>
                                                     <td>{subscription.stripId}</td>
                                                     <td>{subscription.code_contrat}</td>
-                                                    <td>{subscription.code_client}</td>
+                                                    <td>{subscription.codeClient}</td>
                                                     <td>{subscription.interval}</td>
                                                     <td>{subscription.interval_count}</td>
                                                     <td>{subscription.montant}</td>

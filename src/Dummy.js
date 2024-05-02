@@ -50,14 +50,14 @@ export const subscriptions = [
 ]
 export const clients = [
     {
-        code_client: 'CODECL1',
+        codeClient: 'CODECL1',
         name: 'NOM Prénom-test',
         email: 'st-pham@acheter-louer.fr'
     },
     {
-        code_client: 'CODECL2',
+        codeClient: 'CODECL2',
         name: 'NOM Prénom-test-2',
-        email: 'st-pham@acheter-louer.fr'
+        email: 'rominage.115@gmail.com'
     },
 ]
 export const coupons = [

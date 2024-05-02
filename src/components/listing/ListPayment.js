@@ -10,7 +10,7 @@ import { useStripe } from '@stripe/react-stripe-js'
 import socket from "../utils/socket"
 import { useParams, useNavigate } from "react-router"
 
-function ListPayment({ codeClient }) {
+function ListPayment({ client }) {
     const stripe = useStripe()
     const navigate = useNavigate()
     //id from params
@@ -77,8 +77,8 @@ function ListPayment({ codeClient }) {
         })
     }
     useEffect(() => {
-        getPayments(codeClient)
-    }, [codeClient])
+        getPayments(client.codeClient)
+    }, [client])
 
 
     async function updatePayment() {
@@ -110,7 +110,7 @@ function ListPayment({ codeClient }) {
     }
     useEffect(() => {
         socket.on('PAYMENT_UPDATED', () => {
-            getPayments(codeClient)
+            getPayments(client.codeClient)
         })
         return () => {
             socket.off('PAYMENT_UPDATED')
@@ -212,7 +212,7 @@ function ListPayment({ codeClient }) {
                             </div>
                             :
                             <div style={{ width: '70%' }}>
-                                <ListCard codeClient={codeClient} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />
+                                <ListCard client={client} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />
                                 {error && <div style={{ color: 'red', marginBlock: 10 }}>{error}</div>}
                             </div>
                         }

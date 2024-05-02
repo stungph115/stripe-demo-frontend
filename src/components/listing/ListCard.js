@@ -8,7 +8,7 @@ import { Button, Form, Modal } from 'react-bootstrap'
 import { faCheckCircle, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons'
 import { getIconByBrand } from '../utils/utils'
 
-function ListCard({ codeClient, selectedCard, setSelectedCard }) {
+function ListCard({ client, selectedCard, setSelectedCard }) {
 
     const stripe = useStripe()
     const elements = useElements()
@@ -25,18 +25,23 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
     const [setAsDefaultCard, setSetAsDefaultCard] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [isLoadingList, setIsLoadingList] = useState(false)
-    /* console.log('selectedCard: ', selectedCard)
-    console.log(cards) */
     useEffect(() => {
-        getPaymentMethods(codeClient)
-    }, [codeClient])
-    async function getPaymentMethods(codeClient) {
+        if (cardDefault) {
+            console.log(cardDefault)
+            setSelectedCard(cards.find(card => card.default))
+        }
+    }, [cards])
+    useEffect(() => {
+        getPaymentMethods(client)
+    }, [client])
+    async function getPaymentMethods(client) {
         setIsLoadingList(true)
-        axios.get(env.URL + 'customer/' + codeClient).then((res) => {
+        axios.post(env.URL + 'customer/card', client).then((res) => {
             setCards(res.data.entity)
             if (res.data.entity.length > 0) {
                 const findCardDefault = res.data.entity.filter(card => card.default === true)
-                if (findCardDefault) {
+                if (findCardDefault.length > 0) {
+                    console.log(findCardDefault)
                     setCardDefault(findCardDefault[0].id)
                 } else {
                     setCardDefault(null)
@@ -90,7 +95,7 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
                  }, */
             })
             const params = {
-                codeClient: codeClient,
+                codeClient: client.codeClient,
                 paymentMethod: newPaymentMethod.paymentMethod.id
             }
             await axios.post(env.URL + 'customer', params).then((res) => {
@@ -100,7 +105,7 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
                         setDefaultCard(newPaymentMethod.paymentMethod.id)
                     }
                     setShowCardInput(false)
-                    getPaymentMethods(codeClient)
+                    getPaymentMethods(client)
                     setIsLoading(false)
                     setSelectedCard(newPaymentMethod.id)
                 }
@@ -140,11 +145,11 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
         setIsLoading(true)
         axios.post(env.URL + 'customer/update-default-pm', {
             paymentMethod: paymentMethod,
-            custom: codeClient
+            custom: client.codeClient
         }).then((res) => {
             /*  console.log(res)
              console.log('setting card as default done') */
-            getPaymentMethods(codeClient)
+            getPaymentMethods(client)
             setIsLoading(false)
         }).catch((err) => {
             setIsLoading(false)
@@ -156,7 +161,7 @@ function ListCard({ codeClient, selectedCard, setSelectedCard }) {
         setIsLoading(true)
         axios.delete(env.URL + 'customer/' + paymentMethod).then((res) => {
             /* console.log(res) */
-            getPaymentMethods(codeClient)
+            getPaymentMethods(client)
             setIsLoading(false)
             setShowDeteleCard(false)
         }).catch((err) => {
