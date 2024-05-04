@@ -84,7 +84,7 @@ function SubscriptionForm({ chosenSubscription, setChosenSubscription, paymentDa
                         <label>
                             Jour :
                             <Form.Select name="paymentDay" value={paymentDay} onChange={(e) => { setPaymentDay(e.target.value) }}>
-                                {dayOptions.map((day, i) => {
+                                {dayOptions && dayOptions.map((day, i) => {
                                     return (
                                         <option value={day} key={i}>{day}</option>
                                     )
