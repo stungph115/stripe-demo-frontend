@@ -22,10 +22,10 @@ function Listing() {
             <div className='client-input' style={{ display: 'flex', justifyContent: 'center' }}>
                 <label style={{ width: 'fit-content' }}>
                     Select client:
-                    <Form.Select name="client" onChange={(e) => { setClient(e.target.value) }} value={client}>
+                    <Form.Select name="client" onChange={(e) => { setClient(clients.find(client => client.codeClient === e.target.value)) }} value={client.codeClient} style={{ width: '100%' }}>
                         {clients.map((client, i) => {
                             return (
-                                <option value={client} key={i}>{client.name}</option>
+                                <option value={client.codeClient} key={i}>{client.name}</option>
                             )
                         })}
                     </Form.Select>

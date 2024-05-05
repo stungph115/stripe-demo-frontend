@@ -148,7 +148,6 @@ function ListSubscription({ client }) {
                         <Table striped bordered hover >
                             <thead>
                                 <tr>
-                                    <th className="p-3">Code contrat</th>
                                     <th className="p-3">Intervalle</th>
                                     <th className="p-3">Compte d'intervalle</th>
                                     <th className="p-3">Montant</th>
@@ -161,10 +160,9 @@ function ListSubscription({ client }) {
                                 {subscriptions.map((subscription) => (
                                     <React.Fragment key={subscription.stripId}>
                                         <tr onClick={() => handleRowClickSubscription(subscription.stripId)} style={{ cursor: 'pointer' }}>
-                                            <td>{subscription.code_contrat}</td>
                                             <td>{formatInterval(subscription.interval)}</td>
                                             <td>{subscription.interval_count}</td>
-                                            <td>{formatMontant(subscription.montant)} €</td>
+                                            <td>{formatMontant(subscription.montant)}</td>
                                             <td>{formatDateTime(subscription.dateCreated)}</td>
                                             <td>{formatDateTime(subscription.dateUpdated)}</td>
                                             {(subscription.status === 'incomplete_expired' || subscription.status === 'canceled' || subscription.status === 'unpaid') &&
@@ -179,7 +177,7 @@ function ListSubscription({ client }) {
                                         </tr>
                                         {expandedRow === subscription.stripId &&
                                             <tr>
-                                                <td colSpan={7} style={{ textAlign: 'left', padding: 20 }}>
+                                                <td colSpan={6} style={{ textAlign: 'left', padding: 20 }}>
                                                     {isLoading ?
                                                         <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%' }} size='xl' />
                                                         :
@@ -241,7 +239,7 @@ function ListSubscription({ client }) {
                                                                             {pastInvoices.map((invoice) => (
                                                                                 <tr key={invoice.id}>
                                                                                     <td>{formatDateTime(invoice.created * 1000)} </td>
-                                                                                    <td>{formatMontant(invoice.amount_due)} €</td>
+                                                                                    <td>{formatMontant(invoice.amount_due)}</td>
                                                                                     {invoice.status !== 'paid' && invoice.payment_intent.last_payment_error &&
                                                                                         <td> <div style={{ cursor: 'pointer' }} onClick={() => handleUnpaidInvoice(invoice.payment_intent.client_secret)}>
 

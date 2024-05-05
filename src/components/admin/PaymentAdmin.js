@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router"
 import { env } from "../../env"
 import { Button, Table } from "react-bootstrap"
-import { formatDateTime } from "../utils/utils"
+import { formatDateTime, formatMontant } from "../utils/utils"
 
 function PaymentAdmin() {
     const idPayment = useParams().id
@@ -95,7 +95,6 @@ function PaymentAdmin() {
                                         <tr>
                                             <th>ID</th>
                                             <th>ID Stripe</th>
-                                            <th>Code article</th>
                                             <th>Code client</th>
                                             <th>Company</th>
                                             <th>Référence de transaction</th>
@@ -111,12 +110,11 @@ function PaymentAdmin() {
                                                 <tr onClick={() => handleRowClick(payment.stripId, payment.id)} style={{ cursor: 'pointer' }}>
                                                     <td>{payment.id}</td>
                                                     <td>{payment.stripId}</td>
-                                                    <td>{payment.code_article}</td>
-                                                    <td>{payment.codeClient}</td>
+                                                    <td>{payment.code_client}</td>
                                                     <td>{payment.company}</td>
                                                     <td>{payment.ref_transaction}</td>
-                                                    <td>{payment.montant}</td>
-                                                    <td>{payment.status}</td>
+                                                    <td>{formatMontant(payment.montant)}</td>
+                                                    <td style={{ color: payment.status === 'paid' ? 'green' : 'red' }}>{payment.status === 'paid' ? 'payé' : 'impayé'}</td>
                                                     <td>{formatDateTime(payment.dateCreated)}</td>
                                                     <td>{formatDateTime(payment.dateUpdated)}</td>
                                                 </tr>

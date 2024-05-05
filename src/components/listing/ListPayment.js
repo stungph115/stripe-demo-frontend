@@ -134,7 +134,6 @@ function ListPayment({ client }) {
                             <thead>
                                 <tr>
                                     <th className="p-3">Company</th>
-                                    <th className="p-3">Article Code</th>
                                     <th className="p-3">Montant</th>
                                     <th className="p-3">Date Created</th>
                                     <th className="p-3">Date Updated</th>
@@ -146,15 +145,14 @@ function ListPayment({ client }) {
                                     <React.Fragment key={payment.stripId}>
                                         <tr onClick={() => handleRowClickPayment(payment.stripId)} style={{ cursor: 'pointer' }}>
                                             <td>{payment.company}</td>
-                                            <td>{payment.code_article}</td>
-                                            <td>{formatMontant(payment.montant)} €</td>
+                                            <td>{formatMontant(payment.montant)}</td>
                                             <td>{formatDateTime(payment.dateCreated)}</td>
                                             <td>{formatDateTime(payment.dateUpdated)}</td>
                                             <td style={{ color: payment.status === 'paid' ? 'green' : 'red' }}>{payment.status === 'paid' ? 'payé' : 'impayé'}</td>
                                         </tr>
                                         {expandedRow === payment.stripId &&
                                             <tr>
-                                                <td colSpan={6} style={{ textAlign: 'left', padding: 20 }}>
+                                                <td colSpan={5} style={{ textAlign: 'left', padding: 20 }}>
                                                     {isLoading ?
                                                         <FontAwesomeIcon icon={faSpinner} pulse style={{ color: 'gray', width: '100%' }} size='xl' />
                                                         :

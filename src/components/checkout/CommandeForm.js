@@ -2,8 +2,8 @@ import { Form, Card } from 'react-bootstrap';
 import { formatMontant } from '../utils/utils';
 import { useEffect, useState } from 'react';
 import { articles, companies } from '../../Dummy';
-function OrderForm({ nomSociete, setNomsociete, montant, setMontant }) {
-    const [articleChosen, setArticleChosen] = useState([])
+function OrderForm({ nomSociete, setNomsociete, montant, setMontant, articleChosen, setArticleChosen }) {
+
 
     function chooseArticle(article) {
         if (articleChosen.includes(article)) {
@@ -45,7 +45,7 @@ function OrderForm({ nomSociete, setNomsociete, montant, setMontant }) {
                                 <Card.Body style={{ display: 'flex', alignItems: 'center' }}>
                                     <div style={{ marginLeft: 20 }}>
                                         <Card.Title>{article.name}</Card.Title>
-                                        <Card.Text>{formatMontant(article.price)} €</Card.Text>
+                                        <Card.Text>{formatMontant(article.price)}</Card.Text>
                                     </div>
                                     <div style={{ marginLeft: 'auto' }}>
                                         <Form.Check
@@ -68,7 +68,7 @@ function OrderForm({ nomSociete, setNomsociete, montant, setMontant }) {
                 <label >
                     Montant total:
                 </label>
-                <p>{formatMontant(montant)} €</p>
+                <p>{formatMontant(montant)}</p>
             </div>
         </>
     )

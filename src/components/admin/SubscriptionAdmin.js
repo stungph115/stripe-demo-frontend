@@ -5,7 +5,7 @@ import { env } from "../../env"
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome"
 import { faSpinner } from "@fortawesome/free-solid-svg-icons"
 import { Button, Table } from "react-bootstrap"
-import { formatDateTime } from "../utils/utils"
+import { formatDateTime, formatInterval, formatMontant } from "../utils/utils"
 
 function SubscriptionAdmin() {
 
@@ -95,7 +95,6 @@ function SubscriptionAdmin() {
                                         <tr>
                                             <th>ID</th>
                                             <th>ID Stripe</th>
-                                            <th>Code contrat</th>
                                             <th>Code client</th>
                                             <th>interval</th>
                                             <th>interval count</th>
@@ -111,12 +110,19 @@ function SubscriptionAdmin() {
                                                 <tr onClick={() => handleRowClick(subscription.stripId, subscription.id)} style={{ cursor: 'pointer' }}>
                                                     <td>{subscription.id}</td>
                                                     <td>{subscription.stripId}</td>
-                                                    <td>{subscription.code_contrat}</td>
-                                                    <td>{subscription.codeClient}</td>
-                                                    <td>{subscription.interval}</td>
+                                                    <td>{subscription.code_client}</td>
+                                                    <td>{formatInterval(subscription.interval)}</td>
                                                     <td>{subscription.interval_count}</td>
-                                                    <td>{subscription.montant}</td>
-                                                    <td>{subscription.status}</td>
+                                                    <td>{formatMontant(subscription.montant)}</td>
+                                                    {(subscription.status === 'incomplete_expired' || subscription.status === 'canceled' || subscription.status === 'unpaid') &&
+                                                        <td style={{ color: 'red', fontWeight: 500 }}>Annulé</td>
+                                                    }
+                                                    {(subscription.status === 'active') &&
+                                                        <td style={{ color: 'green', fontWeight: 500 }}>Actif</td>
+                                                    }
+                                                    {(subscription.status === 'incomplete' || subscription.status === 'paused' || subscription.status === 'past_due') &&
+                                                        < td style={{ color: 'rgb(255 162 0)', fontWeight: 500 }}>En attente</td>
+                                                    }
                                                     <td>{formatDateTime(subscription.dateCreated)}</td>
                                                     <td>{formatDateTime(subscription.dateUpdated)}</td>
                                                 </tr>

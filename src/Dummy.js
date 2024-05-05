@@ -31,7 +31,7 @@ export const subscriptions = [
         id: 2,
         name: 'Forfait annuel',
         description: 'Un abonnment pour le test',
-        price: 1010,
+        price: 10010,
         recurring: {
             interval: 'year',
             interval_count: 1,
@@ -41,7 +41,7 @@ export const subscriptions = [
         id: 2,
         name: 'Forfait 4 semaine',
         description: 'Un abonnment pour le test',
-        price: 1010,
+        price: 999,
         recurring: {
             interval: 'week',
             interval_count: 4,
@@ -60,6 +60,10 @@ export const clients = [
         email: 'rominage.115@gmail.com'
     },
 ]
+const pastDate = new Date();
+pastDate.setDate(pastDate.getDate() - 7)
+const nextDayDate = new Date()
+nextDayDate.setDate(nextDayDate.getDate() + 1)
 export const coupons = [
     {
         id: 1,
@@ -67,8 +71,9 @@ export const coupons = [
         percent_off: null,
         repeating: null,
         description: '5€ immédiate',
-        applyTo: 1,
-        codes: ['05EIMME1', '05EIMME2', '05EIMME3', '05EIMME4', '05EIMME5']
+        applyTo: 'payment',
+        codes: ['05EIMME1', '05EIMME2', '05EIMME3', '05EIMME4', '05EIMME5'],
+        expiredAt: nextDayDate
     },
     {
         id: 2,
@@ -76,8 +81,9 @@ export const coupons = [
         percent_off: null,
         repeating: 1,
         description: '5€ sur 1er mois',
-        applyTo: 1,
-        codes: ['05E1STM1', '05E1STM2', '05E1STM3', '05E1STM4', '05E1STM5']
+        applyTo: 'subscription',
+        codes: ['05E1STM1', '05E1STM2', '05E1STM3', '05E1STM4', '05E1STM5'],
+        expiredAt: nextDayDate
     },
     {
         id: 3,
@@ -85,26 +91,39 @@ export const coupons = [
         percent_off: 10,
         repeating: null,
         description: '10% immédiate',
-        applyTo: 1,
-        codes: ['10PIMME1', '10PIMME2', '10PIMME3', '10PIMME4', '10PIMME5']
+        applyTo: 'payment',
+        codes: ['10PIMME1', '10PIMME2', '10PIMME3', '10PIMME4', '10PIMME5'],
+        expiredAt: nextDayDate
     },
     {
         id: 4,
         amount_off: null,
         percent_off: 10,
         repeating: 1,
-        applyTo: 1,
+        applyTo: 'subscription',
         description: '10% sur 1er mois',
-        codes: ['10P1STM1', '10P1STM2', '10P1STM3', '10P1STM4', '10P1STM5']
+        codes: ['10P1STM1', '10P1STM2', '10P1STM3', '10P1STM4', '10P1STM5'],
+        expiredAt: nextDayDate
     },
     {
         id: 5,
         amount_off: 'to-1',
         percent_off: null,
         repeating: 1,
-        applyTo: 1,
+        applyTo: 'subscription',
         description: '1€ sur 1er mois',
-        codes: ['01E1STM1', '01E1STM2', '01E1STM3', '01E1STM4', '01E1STM5']
+        codes: ['01E1STM1', '01E1STM2', '01E1STM3', '01E1STM4', '01E1STM5'],
+        expiredAt: nextDayDate
+    },
+    {
+        id: 6,
+        amount_off: null,
+        percent_off: null,
+        repeating: 1,
+        applyTo: 'subscription',
+        description: 'expried coupon',
+        codes: ['expried'],
+        expiredAt: pastDate
     }
 ]
 

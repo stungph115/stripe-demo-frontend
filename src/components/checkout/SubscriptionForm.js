@@ -50,7 +50,7 @@ function SubscriptionForm({ chosenSubscription, setChosenSubscription, paymentDa
                                     <Card.Title>{sub.name}</Card.Title>
                                     <Card.Text>{sub.description}</Card.Text>
                                     <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'center' }}>
-                                        <div style={{ fontSize: 30, marginRight: 5 }}> <strong> {formatMontant(sub.price)} € </strong></div>
+                                        <div style={{ fontSize: 30, marginRight: 5 }}> <strong> {formatMontant(sub.price)} </strong></div>
                                         <div> / {sub.recurring.interval_count > 1 && sub.recurring.interval_count} {formatInterval(sub.recurring.interval)}{sub.recurring.interval_count > 1 && sub.recurring.interval !== 'month' && 's'}</div>
                                     </div>
                                 </Card.Body>
@@ -95,7 +95,7 @@ function SubscriptionForm({ chosenSubscription, setChosenSubscription, paymentDa
                 }
             </div>
             {chosenSubscription && <div className='notice'>
-                <>* Abonnement choisi: <strong> {chosenSubscription.name}</strong> à <strong> {formatMontant(chosenSubscription.price)} € </strong> /{chosenSubscription.recurring.interval_count > 1 && chosenSubscription.recurring.interval_count} {formatInterval(chosenSubscription.recurring.interval)}{chosenSubscription.recurring.interval_count > 1 && chosenSubscription.recurring.interval !== 'month' && 's'}
+                <>* Abonnement choisi: <strong> {chosenSubscription.name}</strong> à <strong> {formatMontant(chosenSubscription.price)} </strong> /{chosenSubscription.recurring.interval_count > 1 && chosenSubscription.recurring.interval_count} {formatInterval(chosenSubscription.recurring.interval)}{chosenSubscription.recurring.interval_count > 1 && chosenSubscription.recurring.interval !== 'month' && 's'}
                 </>
                 <br />
                 {/* check paymentday for week */}

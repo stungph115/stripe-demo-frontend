@@ -3,14 +3,19 @@ import { faCreditCard } from "@fortawesome/free-solid-svg-icons"
 import moment from 'moment'
 moment.locale('fr')
 export const formatDateTime = (dateTimeString) => {
-    console.log("util: ", dateTimeString)
     const formattedDateTime = moment(dateTimeString).format('DD MMM YYYY [à] HH[h]mm')
     return formattedDateTime
 }
 
 export const formatMontant = (montant) => {
-    const formattedMontant = montant.toString().replace(/(\d)(?=(\d{2})+(?!\d))/g, '$1,')
-    return formattedMontant
+    const formatter = new Intl.NumberFormat('fr-FR', {
+        style: 'currency',
+        currency: 'EUR', // Change currency to EUR for Euros
+        minimumFractionDigits: 2,
+        currencyDisplay: 'symbol',
+    });
+
+    return formatter.format(montant / 100)
 }
 export const formatInterval = (interval) => {
     switch (interval) {
