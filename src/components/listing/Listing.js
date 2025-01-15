@@ -35,8 +35,8 @@ function Listing() {
 
             <div style={{ display: 'flex', justifyContent: 'center' }}>
                 <div onClick={() => navigate('./')} className={(currentRoute === '/list' || currentRoute === '/list/') ? 'sub-route choosen' : 'sub-route'}>Méthodes de paiement</div>
-                <div onClick={() => navigate('./payment/all')} className={currentRoute.startsWith('/list/payment') ? 'sub-route choosen' : 'sub-route'}>Mes paiements</div>
-                <div onClick={() => navigate('./subscription/all')} className={currentRoute.startsWith('/list/subscription') ? 'sub-route choosen' : 'sub-route'}>Mes abonnements</div>
+                <div onClick={() => navigate('./payment/all')} className={currentRoute.startsWith('/list/payment') ? 'sub-route choosen' : 'sub-route'}>Paiements</div>
+                <div onClick={() => navigate('./subscription/all')} className={currentRoute.startsWith('/list/subscription') ? 'sub-route choosen' : 'sub-route'}>Abonnements</div>
             </div>
             <Routes>
                 <Route path="/" element={<ListCard client={client} selectedCard={selectedCard} setSelectedCard={setSelectedCard} />} />

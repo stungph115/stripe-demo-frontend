@@ -1,4 +1,7 @@
 /* src/components/PaymentForm.css */
+.payment-wrapper {
+    width: 100%;
+}
 
 form {
     width: fit-content;
